@@ -211,20 +211,22 @@
                             createdAt
                             path
                         }
-                        progresses {
+                        progresses(order_by: {createdAt: desc}) {
                             id
                             grade
                             path
+                            createdAt
                             object {
                                 id
                                 name
                                 type
                             }
                         }
-                        results {
+                        results(order_by: {createdAt: desc}) {
                             id
                             grade
                             path
+                            createdAt
                             object {
                                 id
                                 name
@@ -242,15 +244,32 @@
             const totalXpAmount = user.transactions.reduce((sum, tx) => sum + tx.amount, 0);
             totalXp.textContent = Math.round(totalXpAmount).toLocaleString();
             
-            // Get unique projects from results
-            const projects = user.results.filter(r => 
-                r.object && r.object.type === "project" && !r.path.includes("piscine")
+            // Get projects from both results and progresses
+            // First check results for projects
+            let projects = user.results.filter(r => 
+                r.object && r.object.type === "project" && r.path && !r.path.includes("piscine")
             );
+            
+            // If no projects in results, try progresses
+            if (projects.length === 0) {
+                projects = user.progresses.filter(p => 
+                    p.object && p.object.type === "project" && p.path && !p.path.includes("piscine")
+                );
+            }
+            
+            // If still no projects, check for any result/progress with a path containing typical project identifiers
+            if (projects.length === 0) {
+                const projectKeywords = ["graphql", "profile", "ascii-art", "groupie-tracker", "social-network", "forum"];
+                
+                projects = [...user.results, ...user.progresses].filter(item => 
+                    item.path && projectKeywords.some(keyword => item.path.toLowerCase().includes(keyword))
+                );
+            }
             
             // Count projects
             projectsCount.textContent = projects.length;
             
-            // Calculate pass ratio
+            // Calculate pass ratio - only if we have projects
             const passedProjects = projects.filter(p => p.grade >= 1).length;
             const passRatioValue = projects.length > 0 
                 ? Math.round((passedProjects / projects.length) * 100) 
@@ -260,26 +279,37 @@
             // Display recent projects
             projectsLoading.classList.add('hidden');
             
-            // Sort by most recent (assuming path contains creation info)
-            const sortedProjects = [...projects].sort((a, b) => 
-                b.path.localeCompare(a.path)
-            ).slice(0, 5); // Take only 5 most recent
-            
-            projectsList.innerHTML = '';
-            sortedProjects.forEach(project => {
-                const projectPath = project.path.split('/').pop();
-                const status = project.grade >= 1 ? 'PASS' : 'FAIL';
-                const statusClass = project.grade >= 1 ? 'pass' : 'fail';
+            if (projects.length > 0) {
+                // Sort by most recent first
+                const sortedProjects = [...projects].sort((a, b) => 
+                    new Date(b.createdAt) - new Date(a.createdAt)
+                ).slice(0, 5); // Take only 5 most recent
                 
-                const listItem = document.createElement('li');
-                listItem.className = 'project-item';
-                listItem.innerHTML = `
-                    <div>${projectPath}</div>
-                    <div class="${statusClass}">${status}</div>
-                `;
-                
-                projectsList.appendChild(listItem);
-            });
+                projectsList.innerHTML = '';
+                sortedProjects.forEach(project => {
+                    // Extract project name from path
+                    let projectName = "Unknown Project";
+                    if (project.path) {
+                        const pathParts = project.path.split('/');
+                        projectName = pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2] || "Unknown Project";
+                    }
+                    
+                    const status = project.grade >= 1 ? 'PASS' : 'FAIL';
+                    const statusClass = project.grade >= 1 ? 'pass' : 'fail';
+                    
+                    const listItem = document.createElement('li');
+                    listItem.className = 'project-item';
+                    listItem.innerHTML = `
+                        <div>${projectName}</div>
+                        <div class="${statusClass}">${status}</div>
+                    `;
+                    
+                    projectsList.appendChild(listItem);
+                });
+            } else {
+                // No projects found
+                projectsList.innerHTML = '<li class="project-item">No projects found. You might need to complete some projects first.</li>';
+            }
         }
 
         async function loadXpTimeChart() {
@@ -318,25 +348,65 @@
             const query = `
                 {
                     user {
-                        results {
+                        progresses(where: {object: {type: {_eq: "project"}}}) {
                             grade
-                            object {
-                                type
-                            }
+                            path
+                        }
+                        results(where: {object: {type: {_eq: "project"}}}) {
+                            grade
+                            path
                         }
                     }
                 }
             `;
             
             const data = await executeGraphQLQuery(query);
-            const results = data.user[0].results.filter(r => r.object && r.object.type === "project");
+            
+            // Combine projects from both results and progresses
+            let allProjects = [...data.user[0].results, ...data.user[0].progresses];
+            
+            // Filter out duplicates and piscine exercises
+            let projectPaths = new Set();
+            let uniqueProjects = allProjects.filter(p => {
+                if (!p.path || p.path.includes("piscine")) return false;
+                
+                if (!projectPaths.has(p.path)) {
+                    projectPaths.add(p.path);
+                    return true;
+                }
+                return false;
+            });
+            
+            // If we don't have any projects, try to find anything that looks like a project
+            if (uniqueProjects.length === 0) {
+                const projectKeywords = ["graphql", "profile", "ascii-art", "groupie-tracker", "social-network", "forum"];
+                
+                uniqueProjects = allProjects.filter(item => 
+                    item.path && projectKeywords.some(keyword => item.path.toLowerCase().includes(keyword))
+                );
+            }
             
             // Calculate pass/fail counts
-            const passed = results.filter(r => r.grade >= 1).length;
-            const failed = results.filter(r => r.grade < 1).length;
+            const passed = uniqueProjects.filter(r => r.grade >= 1).length;
+            const failed = uniqueProjects.filter(r => r.grade < 1).length;
             
-            // Create pie chart
-            createPassFailChart(passed, failed);
+            // Save data for potential redraw
+            passFailChart.__data__ = { passed, failed };
+            
+            // Handle the case where there are no projects
+            if (passed === 0 && failed === 0) {
+                // Display a message instead of an empty chart
+                passFailChart.innerHTML = `
+                    <text x="50%" y="50%" text-anchor="middle" font-size="16px">
+                        No project data available yet
+                    </text>
+                `;
+                passFailLegend.innerHTML = '';
+            } else {
+                // Create pie chart
+                createPassFailChart(passed, failed);
+            }
+            
             passFailLoading.classList.add('hidden');
         }
 
