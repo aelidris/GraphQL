@@ -1,531 +1,692 @@
-        // DOM Elements
+        // DOM elements
+        const loginPage = document.getElementById('login-page');
+        const profilePage = document.getElementById('profile-page');
         const loginForm = document.getElementById('login-form');
-        const loginError = document.getElementById('login-error');
-        const loginContainer = document.getElementById('login-container');
-        const profileContainer = document.getElementById('profile-container');
+        const errorMessage = document.getElementById('error-message');
         const logoutBtn = document.getElementById('logout-btn');
-        const userGreeting = document.getElementById('user-greeting');
         
-        // State
-        let jwtToken = localStorage.getItem('jwtToken');
-        let userId = localStorage.getItem('userId');
+        // User info elements
+        const userInitial = document.getElementById('user-initial');
+        const userName = document.getElementById('user-name');
+        const userId = document.getElementById('user-id');
+        const totalXp = document.getElementById('total-xp');
+        const projectsCount = document.getElementById('projects-count');
+        const passRatio = document.getElementById('pass-ratio');
+        const projectsList = document.getElementById('projects-list');
         
+        // Loading elements
+        const userInfoLoading = document.getElementById('user-info-loading');
+        const userInfoContent = document.getElementById('user-info-content');
+        const projectsLoading = document.getElementById('projects-loading');
+        const xpGraphLoading = document.getElementById('xp-graph-loading');
+        const passFailLoading = document.getElementById('pass-fail-loading');
+
+        // Graph elements
+        const xpTimeGraph = document.getElementById('xp-time-graph');
+        const passFailChart = document.getElementById('pass-fail-chart');
+        const passFailLegend = document.getElementById('pass-fail-legend');
+        const tooltip = document.getElementById('tooltip');
+
+        // Tab management
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.getAttribute('data-tab');
+                
+                // Update active button
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Update active content
+                tabContents.forEach(content => content.classList.remove('active'));
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Global variables
+        let authToken = '';
+        const API_URL = 'https://learn.zone01oujda.ma/api';
+        const GRAPHQL_ENDPOINT = `${API_URL}/graphql-engine/v1/graphql`;
+
         // Check if user is already logged in
-        if (jwtToken && userId) {
-            showProfile();
-            fetchProfileData();
+        function checkAuth() {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                authToken = token;
+                showProfilePage();
+                loadUserData();
+            }
         }
-        
+
         // Event Listeners
-        loginForm.addEventListener('submit', handleLogin);
-        logoutBtn.addEventListener('click', handleLogout);
-        
-        // Functions
-        async function handleLogin(e) {
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             
             try {
-                loginError.textContent = '';
-                const response = await fetch('https://learn.zone01oujda.ma/api/auth/signin', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Basic ' + btoa(username + ':' + password),
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Invalid credentials');
-                }
-                
-                const data = await response.json();
-                jwtToken = data;
-                localStorage.setItem('jwtToken', jwtToken);
-                
-                // Extract user ID from JWT
-                const payload = JSON.parse(atob(jwtToken.split('.')[1]));
-                userId = payload.userId;
-                localStorage.setItem('userId', userId);
-                
-                showProfile();
-                fetchProfileData();
+                await login(username, password);
             } catch (error) {
+                errorMessage.style.display = 'block';
                 console.error('Login error:', error);
-                loginError.textContent = 'Login failed. Please check your credentials and try again.';
             }
-        }
-        
-        function handleLogout() {
-            jwtToken = null;
-            userId = null;
-            localStorage.removeItem('jwtToken');
-            localStorage.removeItem('userId');
-            showLogin();
-        }
-        
-        function showLogin() {
-            loginContainer.style.display = 'block';
-            profileContainer.style.display = 'none';
-            logoutBtn.style.display = 'none';
-            userGreeting.textContent = '';
-            loginForm.reset();
-        }
-        
-        function showProfile() {
-            loginContainer.style.display = 'none';
-            profileContainer.style.display = 'block';
-            logoutBtn.style.display = 'block';
-            userGreeting.textContent = 'Welcome!';
-        }
-        
-        async function fetchProfileData() {
-            if (!jwtToken || !userId) return;
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            logout();
+        });
+
+        // Authentication Functions
+        async function login(username, password) {
+            const credentials = btoa(`${username}:${password}`);
             
-            try {
-                // Fetch basic user info
-                const userQuery = `
-                    query GetUserInfo($userId: bigint!) {
-                        user(where: {id: {_eq: $userId}}) {
-                            id
-                            login
-                            firstName: attrs(path: "$.first_name")
-                            lastName: attrs(path: "$.last_name")
-                        }
-                    }
-                `;
-                
-                const userResponse = await makeGraphQLRequest(userQuery, { userId: parseInt(userId) });
-                const userData = userResponse.data.user[0];
-                
-                document.getElementById('user-name').textContent = 
-                    `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.login;
-                document.getElementById('user-login').textContent = `@${userData.login}`;
-                document.getElementById('user-avatar').textContent = userData.login.charAt(0).toUpperCase();
-                
-                // Fetch XP data
-                const xpQuery = `
-                    query GetXpData($userId: bigint!) {
-                        transaction(
-                            where: {userId: {_eq: $userId}, type: {_eq: "xp"}},
-                            order_by: {createdAt: asc}
-                        ) {
-                            amount
-                            createdAt
-                            path
-                        }
-                        
-                        transaction_aggregate(
-                            where: {userId: {_eq: $userId}, type: {_eq: "xp"}}
-                        ) {
-                            aggregate {
-                                sum {
-                                    amount
-                                }
-                            }
-                        }
-                    }
-                `;
-                
-                const xpResponse = await makeGraphQLRequest(xpQuery, { userId: parseInt(userId) });
-                const totalXp = xpResponse.data.transaction_aggregate.aggregate.sum.amount || 0;
-                document.getElementById('total-xp').textContent = totalXp.toLocaleString();
-                
-                // Fetch audit ratio
-                const auditQuery = `
-                    query GetAuditRatio($userId: bigint!) {
-                        audit_ratio: transaction_aggregate(
-                            where: {
-                                userId: {_eq: $userId},
-                                type: {_in: ["up", "down"]}
-                            }
-                        ) {
-                            aggregate {
-                                count
-                                sum {
-                                    amount
-                                }
-                            }
-                        }
-                    }
-                `;
-                
-                const auditResponse = await makeGraphQLRequest(auditQuery, { userId: parseInt(userId) });
-                const auditData = auditResponse.data.audit_ratio.aggregate;
-                const auditRatio = (auditData.sum.amount / auditData.count).toFixed(2);
-                document.getElementById('audit-ratio').textContent = auditRatio;
-                
-                // Fetch project data
-                const projectsQuery = `
-                    query GetProjectData($userId: bigint!) {
-                        progress(
-                            where: {
-                                userId: {_eq: $userId},
-                                object: {type: {_eq: "project"}}
-                            }
-                        ) {
-                            grade
-                            object {
-                                name
-                            }
-                        }
-                        
-                        progress_aggregate(
-                            where: {
-                                userId: {_eq: $userId},
-                                object: {type: {_eq: "project"}}
-                            }
-                        ) {
-                            aggregate {
-                                count
-                            }
-                        }
-                    }
-                `;
-                
-                const projectsResponse = await makeGraphQLRequest(projectsQuery, { userId: parseInt(userId) });
-                const projectsCompleted = projectsResponse.data.progress_aggregate.aggregate.count;
-                document.getElementById('projects-completed').textContent = projectsCompleted;
-                
-                // Calculate piscine stats
-                const piscineProjects = projectsResponse.data.progress.filter(p => 
-                    p.object.name.includes('piscine') || p.path.includes('piscine'));
-                const piscineGrade = piscineProjects.length > 0 ? 
-                    (piscineProjects.reduce((sum, p) => sum + p.grade, 0) / piscineProjects.length ): 0;
-                document.getElementById('piscine-grade').textContent = `${Math.round(piscineGrade * 100)}%`;
-                
-                // Create charts
-                createXpChart(xpResponse.data.transaction);
-                createProjectsChart(projectsResponse.data.progress);
-                
-            } catch (error) {
-                console.error('Error fetching profile data:', error);
+            const response = await fetch(`${API_URL}/auth/signin`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Basic ${credentials}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Invalid credentials');
             }
+
+            const token = await response.json();
+            authToken = token;
+            
+            // Save token to local storage
+            localStorage.setItem('authToken', token);
+            
+            // Hide error message if it was visible
+            errorMessage.style.display = 'none';
+            
+            // Show profile page
+            showProfilePage();
+            
+            // Load user data
+            loadUserData();
         }
-        
-        async function makeGraphQLRequest(query, variables = {}) {
-            const response = await fetch('https://learn.zone01oujda.ma/api/graphql-engine/v1/graphql', {
+
+        function logout() {
+            // Clear token and return to login page
+            localStorage.removeItem('authToken');
+            authToken = '';
+            showLoginPage();
+        }
+
+        function showProfilePage() {
+            loginPage.classList.add('hidden');
+            profilePage.classList.remove('hidden');
+        }
+
+        function showLoginPage() {
+            profilePage.classList.add('hidden');
+            loginPage.classList.remove('hidden');
+        }
+
+        // GraphQL Queries
+        async function executeGraphQLQuery(query, variables = {}) {
+            const response = await fetch(GRAPHQL_ENDPOINT, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${jwtToken}`
+                    'Authorization': `Bearer ${authToken}`
                 },
                 body: JSON.stringify({
                     query,
                     variables
                 })
             });
-            
+
             if (!response.ok) {
-                throw new Error('GraphQL request failed');
+                throw new Error('GraphQL query failed');
+            }
+
+            const data = await response.json();
+            
+            if (data.errors) {
+                console.error('GraphQL errors:', data.errors);
+                throw new Error(data.errors[0].message);
             }
             
-            return await response.json();
+            return data.data;
         }
-        
-        function createXpChart(transactions) {
-            const container = document.getElementById('xp-chart');
-            container.innerHTML = '';
-            
-            if (transactions.length === 0) {
-                container.innerHTML = '<p>No XP data available</p>';
-                return;
+
+        // Data Loading Functions
+        async function loadUserData() {
+            try {
+                // Get basic user info
+                await loadBasicUserInfo();
+                
+                // Load XP and projects data
+                await loadXpAndProjects();
+                
+                // Load charts data
+                loadXpTimeChart();
+                loadPassFailChart();
+                
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                // If unauthorized, redirect to login
+                if (error.message.includes('unauthorized')) {
+                    logout();
+                }
             }
+        }
+
+        async function loadBasicUserInfo() {
+            const query = `
+                {
+                    user {
+                        id
+                        login
+                    }
+                }
+            `;
             
-            // Process data
-            const data = transactions.map(t => ({
-                date: new Date(t.createdAt),
-                amount: t.amount,
-                cumulative: 0
-            }));
+            const data = await executeGraphQLQuery(query);
+            const user = data.user[0];
             
-            // Calculate cumulative XP
+            // Update UI with user info
+            userName.textContent = user.login;
+            userId.textContent = `ID: ${user.id}`;
+            userInitial.textContent = user.login.charAt(0).toUpperCase();
+
+            // Show content, hide loading
+            userInfoLoading.classList.add('hidden');
+            userInfoContent.classList.remove('hidden');
+        }
+
+        async function loadXpAndProjects() {
+            const query = `
+                {
+                    user {
+                        id
+                        transactions(where: {type: {_eq: "xp"}}) {
+                            id
+                            amount
+                            createdAt
+                            path
+                        }
+                        progresses {
+                            id
+                            grade
+                            path
+                            object {
+                                id
+                                name
+                                type
+                            }
+                        }
+                        results {
+                            id
+                            grade
+                            path
+                            object {
+                                id
+                                name
+                                type
+                            }
+                        }
+                    }
+                }
+            `;
+            
+            const data = await executeGraphQLQuery(query);
+            const user = data.user[0];
+            
+            // Calculate total XP
+            const totalXpAmount = user.transactions.reduce((sum, tx) => sum + tx.amount, 0);
+            totalXp.textContent = Math.round(totalXpAmount).toLocaleString();
+            
+            // Get unique projects from results
+            const projects = user.results.filter(r => 
+                r.object && r.object.type === "project" && !r.path.includes("piscine")
+            );
+            
+            // Count projects
+            projectsCount.textContent = projects.length;
+            
+            // Calculate pass ratio
+            const passedProjects = projects.filter(p => p.grade >= 1).length;
+            const passRatioValue = projects.length > 0 
+                ? Math.round((passedProjects / projects.length) * 100) 
+                : 0;
+            passRatio.textContent = `${passRatioValue}%`;
+            
+            // Display recent projects
+            projectsLoading.classList.add('hidden');
+            
+            // Sort by most recent (assuming path contains creation info)
+            const sortedProjects = [...projects].sort((a, b) => 
+                b.path.localeCompare(a.path)
+            ).slice(0, 5); // Take only 5 most recent
+            
+            projectsList.innerHTML = '';
+            sortedProjects.forEach(project => {
+                const projectPath = project.path.split('/').pop();
+                const status = project.grade >= 1 ? 'PASS' : 'FAIL';
+                const statusClass = project.grade >= 1 ? 'pass' : 'fail';
+                
+                const listItem = document.createElement('li');
+                listItem.className = 'project-item';
+                listItem.innerHTML = `
+                    <div>${projectPath}</div>
+                    <div class="${statusClass}">${status}</div>
+                `;
+                
+                projectsList.appendChild(listItem);
+            });
+        }
+
+        async function loadXpTimeChart() {
+            const query = `
+                {
+                    user {
+                        transactions(where: {type: {_eq: "xp"}}, order_by: {createdAt: asc}) {
+                            amount
+                            createdAt
+                            path
+                        }
+                    }
+                }
+            `;
+            
+            const data = await executeGraphQLQuery(query);
+            const transactions = data.user[0].transactions;
+            
+            // Process data for the chart
             let cumulativeXp = 0;
-            data.forEach(item => {
-                cumulativeXp += item.amount;
-                item.cumulative = cumulativeXp;
+            const chartData = transactions.map(tx => {
+                cumulativeXp += tx.amount;
+                return {
+                    date: new Date(tx.createdAt),
+                    xp: cumulativeXp,
+                    project: tx.path.split('/').pop()
+                };
             });
             
+            // Create XP over time chart
+            createXpTimeChart(chartData);
+            xpGraphLoading.classList.add('hidden');
+        }
+
+        async function loadPassFailChart() {
+            const query = `
+                {
+                    user {
+                        results {
+                            grade
+                            object {
+                                type
+                            }
+                        }
+                    }
+                }
+            `;
+            
+            const data = await executeGraphQLQuery(query);
+            const results = data.user[0].results.filter(r => r.object && r.object.type === "project");
+            
+            // Calculate pass/fail counts
+            const passed = results.filter(r => r.grade >= 1).length;
+            const failed = results.filter(r => r.grade < 1).length;
+            
+            // Create pie chart
+            createPassFailChart(passed, failed);
+            passFailLoading.classList.add('hidden');
+        }
+
+        // SVG Chart Creation
+        function createXpTimeChart(data) {
+            // Clear previous chart
+            xpTimeGraph.innerHTML = '';
+            
             // Chart dimensions
-            const width = container.clientWidth;
+            const width = xpTimeGraph.clientWidth;
             const height = 400;
-            const margin = { top: 20, right: 30, bottom: 40, left: 60 };
-            const innerWidth = width - margin.left - margin.right;
-            const innerHeight = height - margin.top - margin.bottom;
+            const margin = { top: 40, right: 40, bottom: 60, left: 80 };
+            const chartWidth = width - margin.left - margin.right;
+            const chartHeight = height - margin.top - margin.bottom;
             
-            // Create SVG
-            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            svg.setAttribute("width", "100%");
-            svg.setAttribute("height", "100%");
-            svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-            container.appendChild(svg);
+            // Parse dates and find min/max values
+            const dateExtent = [data[0].date, data[data.length - 1].date];
+            const xpMax = data[data.length - 1].xp;
             
-            // Create group for chart
-            const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-            g.setAttribute("transform", `translate(${margin.left},${margin.top})`);
-            svg.appendChild(g);
-            
-            // X scale (time)
-            const xExtent = [data[0].date, data[data.length - 1].date];
-            const xScale = (date) => {
-                const range = xExtent[1] - xExtent[0];
-                return ((date - xExtent[0]) / range) * innerWidth;
+            // Create scales
+            const xScale = (x) => {
+                return margin.left + (x - dateExtent[0]) / (dateExtent[1] - dateExtent[0]) * chartWidth;
             };
             
-            // Y scale (cumulative XP)
-            const yMax = Math.max(...data.map(d => d.cumulative));
-            const yScale = (value) => innerHeight - (value / yMax) * innerHeight;
+            const yScale = (y) => {
+                return height - margin.bottom - (y / xpMax) * chartHeight;
+            };
             
-            // Create line
-            const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            let pathData = `M ${xScale(data[0].date)} ${yScale(data[0].cumulative)}`;
+            // Create chart group
+            const chartGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             
+            // Create axes
+            // X-axis
+            const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            xAxis.setAttribute('x1', margin.left);
+            xAxis.setAttribute('y1', height - margin.bottom);
+            xAxis.setAttribute('x2', width - margin.right);
+            xAxis.setAttribute('y2', height - margin.bottom);
+            xAxis.setAttribute('class', 'axis-line');
+            chartGroup.appendChild(xAxis);
+            
+            // Y-axis
+            const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            yAxis.setAttribute('x1', margin.left);
+            yAxis.setAttribute('y1', margin.top);
+            yAxis.setAttribute('x2', margin.left);
+            yAxis.setAttribute('y2', height - margin.bottom);
+            yAxis.setAttribute('class', 'axis-line');
+            chartGroup.appendChild(yAxis);
+            
+            // X-axis label
+            const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            xLabel.setAttribute('x', margin.left + chartWidth / 2);
+            xLabel.setAttribute('y', height - 15);
+            xLabel.setAttribute('text-anchor', 'middle');
+            xLabel.textContent = 'Timeline';
+            chartGroup.appendChild(xLabel);
+            
+            // Y-axis label
+            const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            yLabel.setAttribute('transform', `translate(25, ${margin.top + chartHeight / 2}) rotate(-90)`);
+            yLabel.setAttribute('text-anchor', 'middle');
+            yLabel.textContent = 'Cumulative XP';
+            chartGroup.appendChild(yLabel);
+            
+            // Title
+            const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            title.setAttribute('x', margin.left + chartWidth / 2);
+            title.setAttribute('y', margin.top - 10);
+            title.setAttribute('text-anchor', 'middle');
+            title.setAttribute('font-weight', 'bold');
+            title.textContent = 'XP Progress Over Time';
+            chartGroup.appendChild(title);
+            
+            // X-axis ticks
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const tickCount = 5;
+            const tickInterval = (dateExtent[1] - dateExtent[0]) / (tickCount - 1);
+            
+            for (let i = 0; i < tickCount; i++) {
+                const tickDate = new Date(dateExtent[0].getTime() + tickInterval * i);
+                const tickX = xScale(tickDate);
+                
+                // Tick line
+                const tickLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                tickLine.setAttribute('x1', tickX);
+                tickLine.setAttribute('y1', height - margin.bottom);
+                tickLine.setAttribute('x2', tickX);
+                tickLine.setAttribute('y2', height - margin.bottom + 5);
+                tickLine.setAttribute('stroke', '#666');
+                chartGroup.appendChild(tickLine);
+                
+                // Tick label
+                const tickLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                tickLabel.setAttribute('x', tickX);
+                tickLabel.setAttribute('y', height - margin.bottom + 20);
+                tickLabel.setAttribute('text-anchor', 'middle');
+                tickLabel.setAttribute('class', 'axis-text');
+                tickLabel.textContent = `${monthNames[tickDate.getMonth()]} ${tickDate.getFullYear()}`;
+                chartGroup.appendChild(tickLabel);
+            }
+            
+            // Y-axis ticks
+            const yTickCount = 5;
+            for (let i = 0; i <= yTickCount; i++) {
+                const tickValue = (xpMax / yTickCount) * i;
+                const tickY = yScale(tickValue);
+                
+                // Tick line
+                const tickLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                tickLine.setAttribute('x1', margin.left - 5);
+                tickLine.setAttribute('y1', tickY);
+                tickLine.setAttribute('x2', margin.left);
+                tickLine.setAttribute('y2', tickY);
+                tickLine.setAttribute('stroke', '#666');
+                chartGroup.appendChild(tickLine);
+                
+                // Grid line
+                const gridLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                gridLine.setAttribute('x1', margin.left);
+                gridLine.setAttribute('y1', tickY);
+                gridLine.setAttribute('x2', width - margin.right);
+                gridLine.setAttribute('y2', tickY);
+                gridLine.setAttribute('stroke', '#eee');
+                gridLine.setAttribute('stroke-dasharray', '3,3');
+                chartGroup.appendChild(gridLine);
+                
+                // Tick label
+                const tickLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                tickLabel.setAttribute('x', margin.left - 10);
+                tickLabel.setAttribute('y', tickY + 5);
+                tickLabel.setAttribute('text-anchor', 'end');
+                tickLabel.setAttribute('class', 'axis-text');
+                tickLabel.textContent = Math.round(tickValue).toLocaleString();
+                chartGroup.appendChild(tickLabel);
+            }
+            
+            // Create the path for XP line
+            let pathD = `M ${xScale(data[0].date)} ${yScale(data[0].xp)}`;
             for (let i = 1; i < data.length; i++) {
-                pathData += ` L ${xScale(data[i].date)} ${yScale(data[i].cumulative)}`;
+                pathD += ` L ${xScale(data[i].date)} ${yScale(data[i].xp)}`;
             }
             
-            line.setAttribute("d", pathData);
-            line.setAttribute("fill", "none");
-            line.setAttribute("stroke", "var(--accent)");
-            line.setAttribute("stroke-width", "2");
-            g.appendChild(line);
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', pathD);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', 'var(--primary-color)');
+            path.setAttribute('stroke-width', 3);
+            chartGroup.appendChild(path);
             
-            // Add circles for data points
-            data.forEach((point, i) => {
-                if (i % Math.floor(data.length / 10) === 0) { // Show every 10th point
-                    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                    circle.setAttribute("cx", xScale(point.date));
-                    circle.setAttribute("cy", yScale(point.cumulative));
-                    circle.setAttribute("r", "4");
-                    circle.setAttribute("fill", "var(--primary)");
-                    circle.setAttribute("stroke", "white");
-                    circle.setAttribute("stroke-width", "1");
+            // Add data points
+            data.forEach((d, i) => {
+                // Only add points for significant XP gains (to avoid cluttering)
+                if (i === 0 || i === data.length - 1 || d.xp - data[i-1].xp > xpMax * 0.03) {
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', xScale(d.date));
+                    circle.setAttribute('cy', yScale(d.xp));
+                    circle.setAttribute('r', 5);
+                    circle.setAttribute('fill', 'var(--secondary-color)');
                     
-                    // Tooltip
-                    const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
-                    title.textContent = `${point.date.toLocaleDateString()}\nXP: ${point.amount}\nTotal: ${point.cumulative}`;
-                    circle.appendChild(title);
+                    // Add hover effect and tooltip
+                    circle.addEventListener('mouseover', (e) => {
+                        circle.setAttribute('r', 7);
+                        
+                        // Show tooltip
+                        tooltip.style.opacity = 1;
+                        tooltip.style.left = `${e.pageX + 10}px`;
+                        tooltip.style.top = `${e.pageY - 30}px`;
+                        tooltip.innerHTML = `
+                            <strong>${d.project}</strong><br>
+                            Date: ${d.date.toLocaleDateString()}<br>
+                            XP: ${Math.round(d.xp).toLocaleString()}
+                        `;
+                    });
                     
-                    g.appendChild(circle);
-                }
-            });
-            
-            // Add X axis
-            const xAxis = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            xAxis.setAttribute("d", `M 0 ${innerHeight} H ${innerWidth}`);
-            xAxis.setAttribute("stroke", "#ccc");
-            xAxis.setAttribute("stroke-width", "1");
-            g.appendChild(xAxis);
-            
-            // Add Y axis
-            const yAxis = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            yAxis.setAttribute("d", `M 0 0 V ${innerHeight}`);
-            yAxis.setAttribute("stroke", "#ccc");
-            yAxis.setAttribute("stroke-width", "1");
-            g.appendChild(yAxis);
-            
-            // Add axis labels
-            const xLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            xLabel.setAttribute("x", innerWidth / 2);
-            xLabel.setAttribute("y", innerHeight + margin.bottom - 10);
-            xLabel.setAttribute("text-anchor", "middle");
-            xLabel.setAttribute("fill", "#666");
-            xLabel.textContent = "Date";
-            svg.appendChild(xLabel);
-            
-            const yLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            yLabel.setAttribute("x", -innerHeight / 2);
-            yLabel.setAttribute("y", 10);
-            yLabel.setAttribute("transform", "rotate(-90)");
-            yLabel.setAttribute("text-anchor", "middle");
-            yLabel.setAttribute("fill", "#666");
-            yLabel.textContent = "Cumulative XP";
-            svg.appendChild(yLabel);
-            
-            // Add grid lines
-            // Horizontal (Y) grid lines
-            for (let i = 0; i <= 5; i++) {
-                const y = innerHeight - (i / 5) * innerHeight;
-                const gridLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                gridLine.setAttribute("d", `M 0 ${y} H ${innerWidth}`);
-                gridLine.setAttribute("stroke", "#eee");
-                gridLine.setAttribute("stroke-width", "1");
-                g.appendChild(gridLine);
                 
-                // Add Y axis labels
-                const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                label.setAttribute("x", -10);
-                label.setAttribute("y", y + 4);
-                label.setAttribute("text-anchor", "end");
-                label.setAttribute("fill", "#666");
-                label.setAttribute("font-size", "10px");
-                label.textContent = Math.round((i / 5) * yMax).toLocaleString();
-                g.appendChild(label);
-            }
-            
-            // Vertical (X) grid lines
-            for (let i = 0; i <= 5; i++) {
-                const x = (i / 5) * innerWidth;
-                const gridLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                gridLine.setAttribute("d", `M ${x} 0 V ${innerHeight}`);
-                gridLine.setAttribute("stroke", "#eee");
-                gridLine.setAttribute("stroke-width", "1");
-                g.appendChild(gridLine);
-                
-                // Add X axis labels
-                const date = new Date(xExtent[0].getTime() + (i / 5) * (xExtent[1] - xExtent[0]));
-                const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                label.setAttribute("x", x);
-                label.setAttribute("y", innerHeight + 15);
-                label.setAttribute("text-anchor", "middle");
-                label.setAttribute("fill", "#666");
-                label.setAttribute("font-size", "10px");
-                label.textContent = date.toLocaleDateString();
-                svg.appendChild(label);
-            }
-        }
-        
-        function createProjectsChart(projects) {
-            const container = document.getElementById('projects-chart');
-            container.innerHTML = '';
-            
-            if (projects.length === 0) {
-                container.innerHTML = '<p>No project data available</p>';
-                return;
-            }
-            
-            // Process data - group by project type (piscine vs regular)
-            const piscineProjects = projects.filter(p => 
-                p.object.name.includes('piscine') || p.path.includes('piscine'));
-            const regularProjects = projects.filter(p => 
-                !p.object.name.includes('piscine') && !p.path.includes('piscine'));
-            
-            const data = [
-                { type: 'Piscine Projects', count: piscineProjects.length, avgGrade: piscineProjects.length > 0 ? 
-                    piscineProjects.reduce((sum, p) => sum + p.grade, 0) / piscineProjects.length : 0 },
-                { type: 'Regular Projects', count: regularProjects.length, avgGrade: regularProjects.length > 0 ? 
-                    regularProjects.reduce((sum, p) => sum + p.grade, 0) / regularProjects.length : 0 }
-            ];
-            
-            // Chart dimensions
-            const width = container.clientWidth;
-            const height = 400;
-            const margin = { top: 20, right: 30, bottom: 80, left: 60 };
-            const innerWidth = width - margin.left - margin.right;
-            const innerHeight = height - margin.top - margin.bottom;
-            
-            // Create SVG
-            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            svg.setAttribute("width", "100%");
-            svg.setAttribute("height", "100%");
-            svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-            container.appendChild(svg);
-            
-            // Create group for chart
-            const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-            g.setAttribute("transform", `translate(${margin.left},${margin.top})`);
-            svg.appendChild(g);
-            
-            // X scale (band scale for project types)
-            const xScale = (index) => (index * innerWidth / data.length) + (innerWidth / data.length / 2);
-            
-            // Y scale (for counts)
-            const yMax = Math.max(...data.map(d => d.count));
-            const yScale = (value) => innerHeight - (value / yMax) * innerHeight;
-            
-            // Create bars
-            data.forEach((item, i) => {
-                // Bar for count
-                const bar = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-                bar.setAttribute("x", xScale(i) - 30);
-                bar.setAttribute("y", yScale(item.count));
-                bar.setAttribute("width", 60);
-                bar.setAttribute("height", innerHeight - yScale(item.count));
-                bar.setAttribute("fill", i === 0 ? "var(--accent)" : "var(--primary)");
-                bar.setAttribute("opacity", "0.7");
-                
-                // Tooltip
-                const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
-                title.textContent = `${item.type}\nCount: ${item.count}\nAvg Grade: ${(item.avgGrade * 100).toFixed(1)}%`;
-                bar.appendChild(title);
-                
-                g.appendChild(bar);
-                
-                // Text label for count
-                const countLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                countLabel.setAttribute("x", xScale(i));
-                countLabel.setAttribute("y", yScale(item.count) - 5);
-                countLabel.setAttribute("text-anchor", "middle");
-                countLabel.setAttribute("fill", "#333");
-                countLabel.textContent = item.count;
-                g.appendChild(countLabel);
-                
-                // Text label for average grade
-                const gradeLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                gradeLabel.setAttribute("x", xScale(i));
-                gradeLabel.setAttribute("y", innerHeight + 40);
-                gradeLabel.setAttribute("text-anchor", "middle");
-                gradeLabel.setAttribute("fill", "#666");
-                gradeLabel.textContent = `Avg: ${(item.avgGrade * 100).toFixed(1)}%`;
-                svg.appendChild(gradeLabel);
-            });
-            
-            // Add X axis
-            const xAxis = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            xAxis.setAttribute("d", `M 0 ${innerHeight} H ${innerWidth}`);
-            xAxis.setAttribute("stroke", "#ccc");
-            xAxis.setAttribute("stroke-width", "1");
-            g.appendChild(xAxis);
-            
-            // Add Y axis
-            const yAxis = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            yAxis.setAttribute("d", `M 0 0 V ${innerHeight}`);
-            yAxis.setAttribute("stroke", "#ccc");
-            yAxis.setAttribute("stroke-width", "1");
-            g.appendChild(yAxis);
-            
-            // Add X axis labels (project types)
-            data.forEach((item, i) => {
-                const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                label.setAttribute("x", xScale(i));
-                label.setAttribute("y", innerHeight + 20);
-                label.setAttribute("text-anchor", "middle");
-                label.setAttribute("fill", "#666");
-                label.textContent = item.type;
-                svg.appendChild(label);
-            });
-            
-            // Add Y axis label
-            const yLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            yLabel.setAttribute("x", -innerHeight / 2);
-            yLabel.setAttribute("y", 10);
-            yLabel.setAttribute("transform", "rotate(-90)");
-            yLabel.setAttribute("text-anchor", "middle");
-            yLabel.setAttribute("fill", "#666");
-            yLabel.textContent = "Number of Projects";
-            svg.appendChild(yLabel);
-            
-            // Add grid lines
-            // Horizontal (Y) grid lines
-            for (let i = 0; i <= 5; i++) {
-                const y = innerHeight - (i / 5) * innerHeight;
-                const gridLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                gridLine.setAttribute("d", `M 0 ${y} H ${innerWidth}`);
-                gridLine.setAttribute("stroke", "#eee");
-                gridLine.setAttribute("stroke-width", "1");
-                g.appendChild(gridLine);
-                
-                // Add Y axis labels
-                const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                label.setAttribute("x", -10);
-                label.setAttribute("y", y + 4);
-                label.setAttribute("text-anchor", "end");
-                label.setAttribute("fill", "#666");
-                label.setAttribute("font-size", "10px");
-                label.textContent = Math.round((i / 5) * yMax);
-                g.appendChild(label);
-            }
-        }
-    
+
+circle.addEventListener('mouseout', () => {
+    circle.setAttribute('r', 5);
+    tooltip.style.opacity = 0;
+});
+
+chartGroup.appendChild(circle);
+}
+});
+
+// Add the chart to the SVG
+xpTimeGraph.appendChild(chartGroup);
+}
+
+function createPassFailChart(passed, failed) {
+// Clear previous chart
+passFailChart.innerHTML = '';
+passFailLegend.innerHTML = '';
+
+// Chart dimensions
+const width = passFailChart.clientWidth;
+const height = 400;
+const radius = Math.min(width, height) / 3;
+const centerX = width / 2;
+const centerY = height / 2;
+
+// Calculate total and angles
+const total = passed + failed;
+const passedAngle = passed / total * 360;
+const failedAngle = failed / total * 360;
+
+// Colors
+const colors = ['#2ecc71', '#e74c3c']; // Green for passed, red for failed
+
+// Create pie chart
+const pieGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+pieGroup.setAttribute('transform', `translate(${centerX}, ${centerY})`);
+
+// Title
+const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+title.setAttribute('x', 0);
+title.setAttribute('y', -radius - 20);
+title.setAttribute('text-anchor', 'middle');
+title.setAttribute('font-weight', 'bold');
+title.textContent = 'Project Pass/Fail Ratio';
+pieGroup.appendChild(title);
+
+// Helper function to convert degrees to radians
+const degToRad = (degrees) => {
+return degrees * Math.PI / 180;
+};
+
+// Helper function to calculate point on circle
+const pointOnCircle = (angle, radius) => {
+return {
+x: Math.cos(degToRad(angle - 90)) * radius,
+y: Math.sin(degToRad(angle - 90)) * radius
+};
+};
+
+// Create pie segments
+let startAngle = 0;
+const segments = [
+{ value: passed, label: 'Passed', angle: passedAngle },
+{ value: failed, label: 'Failed', angle: failedAngle }
+];
+
+segments.forEach((segment, i) => {
+if (segment.value === 0) return; // Skip empty segments
+
+const endAngle = startAngle + segment.angle;
+
+// Calculate path
+const start = pointOnCircle(startAngle, radius);
+const end = pointOnCircle(endAngle, radius);
+
+// Determine if the arc is more than 180 degrees
+const largeArcFlag = segment.angle > 180 ? 1 : 0;
+
+// Create path for pie segment
+const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+const d = [
+`M 0 0`,
+`L ${start.x} ${start.y}`,
+`A ${radius} ${radius} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`,
+'Z'
+].join(' ');
+
+path.setAttribute('d', d);
+path.setAttribute('fill', colors[i]);
+path.setAttribute('class', 'pie-segment');
+
+// Add hover effect and tooltip
+path.addEventListener('mouseover', (e) => {
+// Show tooltip
+tooltip.style.opacity = 1;
+tooltip.style.left = `${e.pageX + 10}px`;
+tooltip.style.top = `${e.pageY - 30}px`;
+tooltip.innerHTML = `
+    <strong>${segment.label}</strong><br>
+    Count: ${segment.value}<br>
+    Percentage: ${Math.round(segment.value / total * 100)}%
+`;
+});
+
+path.addEventListener('mouseout', () => {
+tooltip.style.opacity = 0;
+});
+
+pieGroup.appendChild(path);
+
+// Add percentage label if segment is large enough to fit text
+if (segment.angle > 20) {
+const midAngle = startAngle + segment.angle / 2;
+const labelPos = pointOnCircle(midAngle, radius * 0.65);
+
+const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+label.setAttribute('x', labelPos.x);
+label.setAttribute('y', labelPos.y);
+label.setAttribute('text-anchor', 'middle');
+label.setAttribute('fill', 'white');
+label.setAttribute('font-weight', 'bold');
+label.textContent = `${Math.round(segment.value / total * 100)}%`;
+
+pieGroup.appendChild(label);
+}
+
+startAngle = endAngle;
+});
+
+// Add the pie chart to the SVG
+passFailChart.appendChild(pieGroup);
+
+// Create legend
+segments.forEach((segment, i) => {
+if (segment.value === 0) return; // Skip empty segments
+
+const legendItem = document.createElement('div');
+legendItem.className = 'legend-item';
+
+const colorBox = document.createElement('div');
+colorBox.className = 'legend-color';
+colorBox.style.backgroundColor = colors[i];
+
+const label = document.createElement('div');
+label.textContent = `${segment.label}: ${segment.value} (${Math.round(segment.value / total * 100)}%)`;
+
+legendItem.appendChild(colorBox);
+legendItem.appendChild(label);
+passFailLegend.appendChild(legendItem);
+});
+}
+
+// Initialize the app
+document.addEventListener('DOMContentLoaded', () => {
+checkAuth();
+});
+
+// Responsive handling
+window.addEventListener('resize', () => {
+// If charts data exists, redraw charts on window resize
+const xpChartTab = document.getElementById('xp-graph');
+const passFailTab = document.getElementById('pass-fail-graph');
+
+if (xpChartTab.classList.contains('active')) {
+const xpTimeGraphData = xpTimeGraph.__data__;
+if (xpTimeGraphData) {
+createXpTimeChart(xpTimeGraphData);
+}
+} else if (passFailTab.classList.contains('active')) {
+const passedData = passFailChart.__data__?.passed;
+const failedData = passFailChart.__data__?.failed;
+if (passedData !== undefined && failedData !== undefined) {
+createPassFailChart(passedData, failedData);
+}
+}
+});
