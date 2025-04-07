@@ -29,7 +29,7 @@
             
             try {
                 loginError.textContent = '';
-                const response = await fetch('https://zone01oujda.ma/api/auth/signin', {
+                const response = await fetch('https://learn.zone01oujda.ma/api/auth/signin', {
                     method: 'POST',
                     headers: {
                         'Authorization': 'Basic ' + btoa(username + ':' + password),
@@ -206,7 +206,7 @@
         }
         
         async function makeGraphQLRequest(query, variables = {}) {
-            const response = await fetch('https://zone01oujda.ma/api/graphql-engine/v1/graphql', {
+            const response = await fetch('https://learn.zone01oujda.ma/api/graphql-engine/v1/graphql', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
