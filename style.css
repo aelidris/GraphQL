@@ -176,6 +176,7 @@ header {
 }
 
 .tab-content {
+    text-align: center;
     display: none;
 }
 
