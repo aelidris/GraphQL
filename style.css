@@ -194,6 +194,7 @@ header {
 }
 
 .project-item {
+    font-size: 20px;
     padding: 15px;
     border-bottom: 1px solid #eee;
     display: flex;
@@ -205,7 +206,7 @@ header {
 }
 
 .pass {
-    color: var(--secondary-color);
+    color: var(--primary-color);
     font-weight: bold;
 }
 

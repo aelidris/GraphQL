@@ -213,6 +213,7 @@
             const query = `
                {
                   user {
+                  auditRatio
                     id
                     # Get 3 most recent passed projects (from both progresses and results)
                     progresses(
@@ -259,8 +260,13 @@
             `;
             
             const data = await executeGraphQLQuery(query);
+
             const user = data.user[0];
-            console.log(user.transactions.length);
+
+            const transactions = user.transactions
+
+            createXpTimeChart(transactions);
+
             
             // Calculate total XP
             const totalXpAmount = user.transactions.reduce((sum, tx) => sum + tx.amount, 0);
@@ -290,15 +296,9 @@
                 );
             }
             
-            // Count projects
             projectsCount.textContent = user.transactions.length;
             
-            // Calculate pass ratio - only if we have projects
-            const passedProjects = projects.filter(p => p.grade >= 1).length;
-            const passRatioValue = projects.length > 0 
-                ? Math.round((passedProjects / projects.length) * 100) 
-                : 0;
-            passRatio.textContent = `${passRatioValue}%`;
+            passRatio.textContent = `${(user.auditRatio).toFixed(1)}`;
             
             // Display recent projects
             projectsLoading.classList.add('hidden');
@@ -344,6 +344,7 @@
 
 
         async function loadXpTimeChart() {
+
             const query = `
                 {
                     user {
@@ -358,20 +359,10 @@
             
             const data = await executeGraphQLQuery(query);
             const transactions = data.user[0].transactions;
-            
-            // Process data for the chart
-            let cumulativeXp = 0;
-            const chartData = transactions.map(tx => {
-                cumulativeXp += tx.amount;
-                return {
-                    date: new Date(tx.createdAt),
-                    xp: cumulativeXp,
-                    project: tx.path.split('/').pop()
-                };
-            });
+                        
             
             // Create XP over time chart
-            createXpTimeChart(chartData);
+            // createXpTimeChart(transactions);
             xpGraphLoading.classList.add('hidden');
         }
 
@@ -441,10 +432,40 @@
             passFailLoading.classList.add('hidden');
         }
 
+
+
         // SVG Chart Creation
-        function createXpTimeChart(data) {
+        function createXpTimeChart(transactions) {
+            console.log('Transactions data:', transactions);
+            
             // Clear previous chart
             xpTimeGraph.innerHTML = '';
+            
+            // Process transactions into chart data
+            const processedData = [];
+            let cumulativeXp = 0;
+            
+            // Sort transactions by date (oldest first)
+            const sortedTransactions = [...transactions].sort((a, b) => 
+                new Date(a.createdAt) - new Date(b.createdAt)
+            );
+            
+            // Create cumulative XP data points
+            sortedTransactions.forEach(tx => {
+                cumulativeXp += tx.amount;
+                processedData.push({
+                    date: new Date(tx.createdAt),
+                    xp: cumulativeXp,
+                    amount: tx.amount,
+                    path: tx.path
+                });
+            });
+            
+            // If no data, show empty state
+            if (processedData.length === 0) {
+                xpTimeGraph.innerHTML = '<text x="50%" y="50%" text-anchor="middle">No XP data available</text>';
+                return;
+            }
             
             // Chart dimensions
             const width = xpTimeGraph.clientWidth;
@@ -453,9 +474,9 @@
             const chartWidth = width - margin.left - margin.right;
             const chartHeight = height - margin.top - margin.bottom;
             
-            // Parse dates and find min/max values
-            const dateExtent = [data[0].date, data[data.length - 1].date];
-            const xpMax = data[data.length - 1].xp;
+            // Find min/max values
+            const dateExtent = [processedData[0].date, processedData[processedData.length - 1].date];
+            const xpMax = processedData[processedData.length - 1].xp;
             
             // Create scales
             const xScale = (x) => {
@@ -466,12 +487,13 @@
                 return height - margin.bottom - (y / xpMax) * chartHeight;
             };
             
-            // Create chart group
-            const chartGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            // Create SVG elements
+            const svgNS = 'http://www.w3.org/2000/svg';
+            const chartGroup = document.createElementNS(svgNS, 'g');
             
             // Create axes
-            // X-axis
-            const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            // X-axis line
+            const xAxis = document.createElementNS(svgNS, 'line');
             xAxis.setAttribute('x1', margin.left);
             xAxis.setAttribute('y1', height - margin.bottom);
             xAxis.setAttribute('x2', width - margin.right);
@@ -479,8 +501,8 @@
             xAxis.setAttribute('class', 'axis-line');
             chartGroup.appendChild(xAxis);
             
-            // Y-axis
-            const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            // Y-axis line
+            const yAxis = document.createElementNS(svgNS, 'line');
             yAxis.setAttribute('x1', margin.left);
             yAxis.setAttribute('y1', margin.top);
             yAxis.setAttribute('x2', margin.left);
@@ -489,7 +511,7 @@
             chartGroup.appendChild(yAxis);
             
             // X-axis label
-            const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            const xLabel = document.createElementNS(svgNS, 'text');
             xLabel.setAttribute('x', margin.left + chartWidth / 2);
             xLabel.setAttribute('y', height - 15);
             xLabel.setAttribute('text-anchor', 'middle');
@@ -497,14 +519,14 @@
             chartGroup.appendChild(xLabel);
             
             // Y-axis label
-            const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            const yLabel = document.createElementNS(svgNS, 'text');
             yLabel.setAttribute('transform', `translate(25, ${margin.top + chartHeight / 2}) rotate(-90)`);
             yLabel.setAttribute('text-anchor', 'middle');
             yLabel.textContent = 'Cumulative XP';
             chartGroup.appendChild(yLabel);
             
             // Title
-            const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            const title = document.createElementNS(svgNS, 'text');
             title.setAttribute('x', margin.left + chartWidth / 2);
             title.setAttribute('y', margin.top - 10);
             title.setAttribute('text-anchor', 'middle');
@@ -512,9 +534,9 @@
             title.textContent = 'XP Progress Over Time';
             chartGroup.appendChild(title);
             
-            // X-axis ticks
+            // X-axis ticks (months/years)
             const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            const tickCount = 5;
+            const tickCount = Math.min(5, processedData.length);
             const tickInterval = (dateExtent[1] - dateExtent[0]) / (tickCount - 1);
             
             for (let i = 0; i < tickCount; i++) {
@@ -522,7 +544,7 @@
                 const tickX = xScale(tickDate);
                 
                 // Tick line
-                const tickLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                const tickLine = document.createElementNS(svgNS, 'line');
                 tickLine.setAttribute('x1', tickX);
                 tickLine.setAttribute('y1', height - margin.bottom);
                 tickLine.setAttribute('x2', tickX);
@@ -531,7 +553,7 @@
                 chartGroup.appendChild(tickLine);
                 
                 // Tick label
-                const tickLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                const tickLabel = document.createElementNS(svgNS, 'text');
                 tickLabel.setAttribute('x', tickX);
                 tickLabel.setAttribute('y', height - margin.bottom + 20);
                 tickLabel.setAttribute('text-anchor', 'middle');
@@ -547,7 +569,7 @@
                 const tickY = yScale(tickValue);
                 
                 // Tick line
-                const tickLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                const tickLine = document.createElementNS(svgNS, 'line');
                 tickLine.setAttribute('x1', margin.left - 5);
                 tickLine.setAttribute('y1', tickY);
                 tickLine.setAttribute('x2', margin.left);
@@ -556,7 +578,7 @@
                 chartGroup.appendChild(tickLine);
                 
                 // Grid line
-                const gridLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                const gridLine = document.createElementNS(svgNS, 'line');
                 gridLine.setAttribute('x1', margin.left);
                 gridLine.setAttribute('y1', tickY);
                 gridLine.setAttribute('x2', width - margin.right);
@@ -566,7 +588,7 @@
                 chartGroup.appendChild(gridLine);
                 
                 // Tick label
-                const tickLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                const tickLabel = document.createElementNS(svgNS, 'text');
                 tickLabel.setAttribute('x', margin.left - 10);
                 tickLabel.setAttribute('y', tickY + 5);
                 tickLabel.setAttribute('text-anchor', 'end');
@@ -576,23 +598,23 @@
             }
             
             // Create the path for XP line
-            let pathD = `M ${xScale(data[0].date)} ${yScale(data[0].xp)}`;
-            for (let i = 1; i < data.length; i++) {
-                pathD += ` L ${xScale(data[i].date)} ${yScale(data[i].xp)}`;
+            let pathD = `M ${xScale(processedData[0].date)} ${yScale(processedData[0].xp)}`;
+            for (let i = 1; i < processedData.length; i++) {
+                pathD += ` L ${xScale(processedData[i].date)} ${yScale(processedData[i].xp)}`;
             }
             
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const path = document.createElementNS(svgNS, 'path');
             path.setAttribute('d', pathD);
             path.setAttribute('fill', 'none');
             path.setAttribute('stroke', 'var(--primary-color)');
             path.setAttribute('stroke-width', 3);
             chartGroup.appendChild(path);
             
-            // Add data points
-            data.forEach((d, i) => {
-                // Only add points for significant XP gains (to avoid cluttering)
-                if (i === 0 || i === data.length - 1 || d.xp - data[i-1].xp > xpMax * 0.03) {
-                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            // Add data points for significant transactions
+            processedData.forEach((d, i) => {
+                // Only add points for significant XP gains or first/last points
+                if (i === 0 || i === processedData.length - 1 || d.amount > xpMax * 0.05) {
+                    const circle = document.createElementNS(svgNS, 'circle');
                     circle.setAttribute('cx', xScale(d.date));
                     circle.setAttribute('cy', yScale(d.xp));
                     circle.setAttribute('r', 5);
@@ -602,31 +624,34 @@
                     circle.addEventListener('mouseover', (e) => {
                         circle.setAttribute('r', 7);
                         
+                        // Extract project name from path
+                        const pathParts = d.path.split('/').filter(Boolean);
+                        const projectName = pathParts[pathParts.length - 1] || "XP Gain";
+                        
                         // Show tooltip
                         tooltip.style.opacity = 1;
                         tooltip.style.left = `${e.pageX + 10}px`;
                         tooltip.style.top = `${e.pageY - 30}px`;
                         tooltip.innerHTML = `
-                            <strong>${d.project}</strong><br>
+                            <strong>${projectName}</strong><br>
                             Date: ${d.date.toLocaleDateString()}<br>
-                            XP: ${Math.round(d.xp).toLocaleString()}
+                            XP: ${Math.round(d.amount).toLocaleString()}<br>
+                            Total: ${Math.round(d.xp).toLocaleString()}
                         `;
                     });
                     
-                
-
-circle.addEventListener('mouseout', () => {
-    circle.setAttribute('r', 5);
-    tooltip.style.opacity = 0;
-});
-
-chartGroup.appendChild(circle);
-}
-});
-
-// Add the chart to the SVG
-xpTimeGraph.appendChild(chartGroup);
-}
+                    circle.addEventListener('mouseout', () => {
+                        circle.setAttribute('r', 5);
+                        tooltip.style.opacity = 0;
+                    });
+                    
+                    chartGroup.appendChild(circle);
+                }
+            });
+            
+            // Add the chart to the SVG
+            xpTimeGraph.appendChild(chartGroup);
+        }
 
 function createPassFailChart(passed, failed) {
 // Clear previous chart
