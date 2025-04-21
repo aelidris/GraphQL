@@ -12,10 +12,10 @@
         const userFullName = document.getElementById('user-fullName')
         const userEmail = document.getElementById('user-email')
         const totalXp = document.getElementById('total-xp');
-        const projectsCount = document.getElementById('transactions-count');
-        const passRatio = document.getElementById('pass-ratio');
+        const transactionsCount = document.getElementById('transactions-count');
+        const auditRatio = document.getElementById('pass-ratio');
         const userLevel = document.getElementById('user-level')
-        const projectsList = document.getElementById('projects-list');
+        const recentPassedProjects = document.getElementById('projects-list');
         
         // Loading elements
         const userInfoLoading = document.getElementById('user-info-loading');
@@ -27,7 +27,6 @@
         // Graph elements
         const xpTimeGraph = document.getElementById('xp-time-graph');
         const skillsChart = document.getElementById('skill-graph');
-        const passFailLegend = document.getElementById('pass-fail-legend');
         const tooltip = document.getElementById('tooltip');
 
 
@@ -299,9 +298,9 @@
                 );
             }
             
-            projectsCount.textContent = user.transactions.length;
+            transactionsCount.textContent = user.transactions.length;
             
-            passRatio.textContent = `${(user.auditRatio).toFixed(1)}`;
+            auditRatio.textContent = `${(user.auditRatio).toFixed(1)}`;
 
 
             const lvlQuery = `
@@ -336,7 +335,7 @@
             
             // For progresses and results (all are passed now)
             if (projects.length > 0) {
-                projectsList.innerHTML = '';
+                recentPassedProjects.innerHTML = '';
                 
                 // Combine and sort projects
                 const recentProjects = [
@@ -362,10 +361,10 @@
                     listItem.innerHTML = `
                         <div>${projectName} ${projectTransaction ? `(${projectTransaction.amount/1000} kB)` : ''}</div>
                     `;
-                    projectsList.appendChild(listItem);
+                    recentPassedProjects.appendChild(listItem);
                 });
             } else {
-                projectsList.innerHTML = '<li class="project-item">No passed projects found.</li>';
+                recentPassedProjects.innerHTML = '<li class="project-item">No passed projects found.</li>';
             }
         }
 
