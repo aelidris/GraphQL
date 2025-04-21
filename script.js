@@ -26,7 +26,7 @@
 
         // Graph elements
         const xpTimeGraph = document.getElementById('xp-time-graph');
-        const passFailChart = document.getElementById('pass-fail-chart');
+        const skillsChart = document.getElementById('skill-graph');
         const passFailLegend = document.getElementById('pass-fail-legend');
         const tooltip = document.getElementById('tooltip');
 
@@ -170,7 +170,7 @@
                 
                 // Load charts data
                 await loadXpTimeChart();
-                await loadPassFailChart();
+                await loadSkillsChart();
                 
             } catch (error) {
                 console.error('Error loading user data:', error);
@@ -397,217 +397,174 @@
             xpGraphLoading.classList.add('hidden');
         }
 
-        async function loadPassFailChart() {
-            const skillsData = `
-            {
-               user {
-                    go_skill: transactions(
-                      where: { type: { _eq: "skill_go" } }
-                      order_by: { amount: desc }
-                      limit: 1
+        async function loadSkillsChart() {
+            const skillsData = `{
+                user {
+                    transactions(
+                        where: { type: { _in: [
+                            "skill_go", "skill_js", "skill_algo", "skill_html", "skill_css",
+                            "skill_docker", "skill_prog", "skill_stats", "skill_tcp", "skill_unix",
+                            "skill_sql", "skill_game", "skill_back-end", "skill_front-end", "skill_sys-admin"
+                        ]}}
+                        order_by: { type: asc, amount: desc }
                     ) {
-                      amount
-                    }
-
-                    js_skill: transactions(
-                      where: { type: { _eq: "skill_js" } }
-                      order_by: { amount: desc }
-                      limit: 1
-                    ) {
-                      amount
-                    }
-                    
-                    algo_skill: transactions(
-                      where: { type: { _eq: "skill_algo" } }
-                      order_by: { amount: desc }
-                      limit: 1
-                    ) {
-                      amount
-                    }
-                    
-                    html_skill: transactions(
-                      where: { type: { _eq: "skill_html" } }
-                      order_by: { amount: desc }
-                      limit: 1
-                    ) {
-                      amount
-                    }
-
-                    css_skill: transactions(
-                      where: { type: { _eq: "skill_css" } }
-                      order_by: { amount: desc }
-                      limit: 1
-                    ) {
-                      amount
-                    }
-                       
-                    docker_skill: transactions(
-                      where: { type: { _eq: "skill_docker" } }
-                      order_by: { amount: desc }
-                      limit: 1
-                    ) {
-                      amount
-                    }
-
-                    prog_skill: transactions(
-                      where: { type: { _eq: "skill_prog" } }
-                      order_by: { amount: desc }
-                      limit: 1
-                    ) {
-                      amount
-                    }
-
-                    stats_skill: transactions(
-                      where: { type: { _eq: "skill_stats" } }
-                      order_by: { amount: desc }
-                      limit: 1
-                    ) {
-                      amount
-                    }
-
-                    tcp_skill: transactions(
-                      where: { type: { _eq: "skill_tcp" } }
-                      order_by: { amount: desc }
-                      limit: 1
-                    ) {
-                      amount
-                    }
-
-                    unix_skill: transactions(
-                      where: { type: { _eq: "skill_unix" } }
-                      order_by: { amount: desc }
-                      limit: 1
-                    ) {
-                      amount
-                    }
-
-                    sql_skill: transactions(
-                      where: { type: { _eq: "skill_sql" } }
-                      order_by: { amount: desc }
-                      limit: 1
-                    ) {
-                      amount
-                    }
-
-
-                    game_skill: transactions(
-                      where: { type: { _eq: "skill_game" } }
-                      order_by: { amount: desc }
-                      limit: 1
-                    ) {
-                      amount
-                    }
-
-                    backEnd_skill: transactions(
-                      where: { type: { _eq: "skill_back-end" } }
-                      order_by: { amount: desc }
-                      limit: 1
-                    ) {
-                      amount
-                    }
-
-                    frontEnd_skill: transactions(
-                      where: { type: { _eq: "skill_front-end" } }
-                      order_by: { amount: desc }
-                      limit: 1
-                    ) {
-                      amount
-                    }
-
-                    sysAdmin_skill: transactions(
-                      where: { type: { _eq: "skill_sys-admin" } }
-                      order_by: { amount: desc }
-                      limit: 1
-                    ) {
-                      amount
+                        type
+                        amount
                     }
                 }
             }`;
-                
-        const displaySkills = await executeGraphQLQuery(skillsData);
-        const userData = displaySkills.user[0];
-        const skillNames = [
-            "go", "js", "algo", "html", "css", "docker", "prog", 
-            "stats", "tcp", "unix", "sql", "backEnd", "frontEnd", 
-            "game", "sysAdmin"
-          ];
-          
-          skillNames.forEach(skill => {
-            const key = `${skill}_skill`;
-            console.log(`${skill} Skill:`, userData[key]?.[0]?.amount || 0);
-          });
-
-
-
-
-
-
-
-
-
-            const query = `
-                {
-                    user {
-                        progresses(where: {object: {type: {_eq: "project"}}}) {
-                            grade
-                            path
-                        }
-                        results(where: {object: {type: {_eq: "project"}}}) {
-                            grade
-                            path
-                        }
-                    }
+            
+            const displaySkills = await executeGraphQLQuery(skillsData);
+            const transactions = displaySkills.user[0].transactions;
+        
+            // Process data
+            const skillAmounts = {};
+            transactions.forEach(transaction => {
+                const skillType = transaction.type.replace("skill_", "");
+                if (!skillAmounts[skillType]) {
+                    skillAmounts[skillType] = transaction.amount;
                 }
-            `;
-            
-            const data = await executeGraphQLQuery(query);
-            
-            // Combine projects from both results and progresses
-            let allProjects = [...data.user[0].results, ...data.user[0].progresses];
-            
-            // Filter out duplicates and piscine exercises
-            let projectPaths = new Set();
-            let uniqueProjects = allProjects.filter(p => {
-                if (!p.path || p.path.includes("piscine")) return false;
-                
-                if (!projectPaths.has(p.path)) {
-                    projectPaths.add(p.path);
-                    return true;
-                }
-                return false;
             });
-            
-            // If we don't have any projects, try to find anything that looks like a project
-            if (uniqueProjects.length === 0) {
-                const projectKeywords = ["graphql", "profile", "ascii-art", "groupie-tracker", "social-network", "forum"];
+        
+            // Get the container element
+            const skillsChart = document.getElementById('skill-graph');
+            skillsChart.innerHTML = ''; // Clear previous content
+        
+            // SVG dimensions
+            const width = 500;
+            const height = 500;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = Math.min(width, height) * 0.4;
+            const maxAmount = Math.max(...Object.values(skillAmounts), 1); // Avoid division by zero
+        
+            // Create SVG element
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", width);
+            svg.setAttribute("height", height);
+            svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        
+            // Create skill segments
+            const skills = Object.keys(skillAmounts);
+            const angleStep = (2 * Math.PI) / skills.length;
+        
+            skills.forEach((skill, index) => {
+                const angle = index * angleStep;
+                const amount = skillAmounts[skill] || 0;
+                const normalizedAmount = amount / maxAmount;
+                const segmentRadius = radius * normalizedAmount;
+        
+                // Create skill segment (circle sector)
+                const endAngle = angle + angleStep;
+                const x1 = centerX + radius * Math.cos(angle);
+                const y1 = centerY + radius * Math.sin(angle);
+                const x2 = centerX + radius * Math.cos(endAngle);
+                const y2 = centerY + radius * Math.sin(endAngle);
+        
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", `M${centerX},${centerY} L${x1},${y1} A${radius},${radius} 0 0,1 ${x2},${y2} Z`);
+                path.setAttribute("fill", getRandomColor());
+                path.setAttribute("stroke", "#fff");
+                path.setAttribute("stroke-width", "1");
+                path.setAttribute("data-skill", skill);
+                path.setAttribute("data-amount", amount);
                 
-                uniqueProjects = allProjects.filter(item => 
-                    item.path && projectKeywords.some(keyword => item.path.toLowerCase().includes(keyword))
-                );
+                // Add hover effect
+                path.addEventListener('mouseover', function() {
+                    this.style.opacity = '0.8';
+                    showTooltip(skill, amount);
+                });
+                path.addEventListener('mouseout', function() {
+                    this.style.opacity = '1';
+                    hideTooltip();
+                });
+        
+                svg.appendChild(path);
+        
+                // Add skill label
+                const labelAngle = angle + angleStep / 2;
+                const labelRadius = radius * 1.1;
+                const labelX = centerX + labelRadius * Math.cos(labelAngle);
+                const labelY = centerY + labelRadius * Math.sin(labelAngle);
+        
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", labelX);
+                text.setAttribute("y", labelY);
+                text.setAttribute("text-anchor", "middle");
+                text.setAttribute("dominant-baseline", "middle");
+                text.setAttribute("font-size", "10");
+                text.textContent = skill;
+                svg.appendChild(text);
+            });
+        
+            // Add center circle
+            const centerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            centerCircle.setAttribute("cx", centerX);
+            centerCircle.setAttribute("cy", centerY);
+            centerCircle.setAttribute("r", radius * 0.2);
+            centerCircle.setAttribute("fill", "#ffffff");
+            centerCircle.setAttribute("stroke", "#333");
+            centerCircle.setAttribute("stroke-width", "1");
+            svg.appendChild(centerCircle);
+        
+            // Add title
+            const title = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            title.setAttribute("x", centerX);
+            title.setAttribute("y", centerY);
+            title.setAttribute("text-anchor", "middle");
+            title.setAttribute("dominant-baseline", "middle");
+            title.setAttribute("font-size", "14");
+            title.setAttribute("font-weight", "bold");
+            title.textContent = "Skills";
+            svg.appendChild(title);
+        
+            skillsChart.appendChild(svg);
+        
+            // Helper function for random colors
+            function getRandomColor() {
+                const letters = '0123456789ABCDEF';
+                let color = '#';
+                for (let i = 0; i < 6; i++) {
+                    color += letters[Math.floor(Math.random() * 16)];
+                }
+                return color;
             }
-            
-            // Calculate pass/fail counts
-            const passed = uniqueProjects.filter(r => r.grade >= 1).length;
-            const failed = uniqueProjects.filter(r => r.grade < 1).length;
-            
-            // Save data for potential redraw
-            passFailChart.__data__ = { passed, failed };
-            
-            // Handle the case where there are no projects
-            if (passed === 0 && failed === 0) {
-                // Display a message instead of an empty chart
-                passFailChart.innerHTML = `
-                    <text x="50%" y="50%" text-anchor="middle" font-size="16px">
-                        No project data available yet
-                    </text>
-                `;
-                passFailLegend.innerHTML = '';
-            } else {
-                // Create pie chart
-                createPassFailChart(passed, failed);
+        
+            // Tooltip functions
+            function showTooltip(skill, amount) {
+                let tooltip = document.getElementById('skill-tooltip');
+                if (!tooltip) {
+                    tooltip = document.createElement('div');
+                    tooltip.id = 'skill-tooltip';
+                    tooltip.style.position = 'absolute';
+                    tooltip.style.background = 'rgba(0,0,0,0.7)';
+                    tooltip.style.color = 'white';
+                    tooltip.style.padding = '5px 10px';
+                    tooltip.style.borderRadius = '5px';
+                    tooltip.style.pointerEvents = 'none';
+                    document.body.appendChild(tooltip);
+                }
+                tooltip.textContent = `${skill}: ${amount} %`;
+                tooltip.style.display = 'block';
+                
+                document.addEventListener('mousemove', positionTooltip);
             }
-            
-            passFailLoading.classList.add('hidden');
+        
+            function positionTooltip(e) {
+                const tooltip = document.getElementById('skill-tooltip');
+                if (tooltip) {
+                    tooltip.style.left = `${e.pageX + 10}px`;
+                    tooltip.style.top = `${e.pageY + 10}px`;
+                }
+            }
+        
+            function hideTooltip() {
+                const tooltip = document.getElementById('skill-tooltip');
+                if (tooltip) {
+                    tooltip.style.display = 'none';
+                    document.removeEventListener('mousemove', positionTooltip);
+                }
+            }
         }
 
 
@@ -981,7 +938,7 @@ checkAuth();
 window.addEventListener('resize', () => {
 // If charts data exists, redraw charts on window resize
 const xpChartTab = document.getElementById('xp-graph');
-const passFailTab = document.getElementById('pass-fail-graph');
+const passFailTab = document.getElementById('skill-graph');
 
 if (xpChartTab.classList.contains('active')) {
 const xpTimeGraphData = xpTimeGraph.__data__;
