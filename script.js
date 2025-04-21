@@ -399,24 +399,149 @@
 
         async function loadPassFailChart() {
             const skillsData = `
-                 {
-                  user {
-                    transactions(
-                      where: {
-                        type: { _nin: ["xp","level","up","down"] }
-                      }
+            {
+               user {
+                    go_skill: transactions(
+                      where: { type: { _eq: "skill_go" } }
+                      order_by: { amount: desc }
+                      limit: 1
                     ) {
-                      type
                       amount
                     }
-                      
+
+                    js_skill: transactions(
+                      where: { type: { _eq: "skill_js" } }
+                      order_by: { amount: desc }
+                      limit: 1
+                    ) {
+                      amount
+                    }
                     
-                  }
-        }`;
+                    algo_skill: transactions(
+                      where: { type: { _eq: "skill_algo" } }
+                      order_by: { amount: desc }
+                      limit: 1
+                    ) {
+                      amount
+                    }
+                    
+                    html_skill: transactions(
+                      where: { type: { _eq: "skill_html" } }
+                      order_by: { amount: desc }
+                      limit: 1
+                    ) {
+                      amount
+                    }
+
+                    css_skill: transactions(
+                      where: { type: { _eq: "skill_css" } }
+                      order_by: { amount: desc }
+                      limit: 1
+                    ) {
+                      amount
+                    }
+                       
+                    docker_skill: transactions(
+                      where: { type: { _eq: "skill_docker" } }
+                      order_by: { amount: desc }
+                      limit: 1
+                    ) {
+                      amount
+                    }
+
+                    prog_skill: transactions(
+                      where: { type: { _eq: "skill_prog" } }
+                      order_by: { amount: desc }
+                      limit: 1
+                    ) {
+                      amount
+                    }
+
+                    stats_skill: transactions(
+                      where: { type: { _eq: "skill_stats" } }
+                      order_by: { amount: desc }
+                      limit: 1
+                    ) {
+                      amount
+                    }
+
+                    tcp_skill: transactions(
+                      where: { type: { _eq: "skill_tcp" } }
+                      order_by: { amount: desc }
+                      limit: 1
+                    ) {
+                      amount
+                    }
+
+                    unix_skill: transactions(
+                      where: { type: { _eq: "skill_unix" } }
+                      order_by: { amount: desc }
+                      limit: 1
+                    ) {
+                      amount
+                    }
+
+                    sql_skill: transactions(
+                      where: { type: { _eq: "skill_sql" } }
+                      order_by: { amount: desc }
+                      limit: 1
+                    ) {
+                      amount
+                    }
+
+
+                    game_skill: transactions(
+                      where: { type: { _eq: "skill_game" } }
+                      order_by: { amount: desc }
+                      limit: 1
+                    ) {
+                      amount
+                    }
+
+                    backEnd_skill: transactions(
+                      where: { type: { _eq: "skill_back-end" } }
+                      order_by: { amount: desc }
+                      limit: 1
+                    ) {
+                      amount
+                    }
+
+                    frontEnd_skill: transactions(
+                      where: { type: { _eq: "skill_front-end" } }
+                      order_by: { amount: desc }
+                      limit: 1
+                    ) {
+                      amount
+                    }
+
+                    sysAdmin_skill: transactions(
+                      where: { type: { _eq: "skill_sys-admin" } }
+                      order_by: { amount: desc }
+                      limit: 1
+                    ) {
+                      amount
+                    }
+                }
+            }`;
                 
-        const displaySkills = await executeGraphQLQuery(skillsData)
-                
-        console.log(displaySkills.user[0]);
+        const displaySkills = await executeGraphQLQuery(skillsData);
+        const userData = displaySkills.user[0];
+        const skillNames = [
+            "go", "js", "algo", "html", "css", "docker", "prog", 
+            "stats", "tcp", "unix", "sql", "backEnd", "frontEnd", 
+            "game", "sysAdmin"
+          ];
+          
+          skillNames.forEach(skill => {
+            const key = `${skill}_skill`;
+            console.log(`${skill} Skill:`, userData[key]?.[0]?.amount || 0);
+          });
+
+
+
+
+
+
 
 
 
