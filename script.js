@@ -254,6 +254,7 @@
                     ) {
                       amount
                       path
+                      createdAt
                     }
                   }
                 }
