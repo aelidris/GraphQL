@@ -30,6 +30,7 @@
         const passFailLegend = document.getElementById('pass-fail-legend');
         const tooltip = document.getElementById('tooltip');
 
+
         // Tab management
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabContents = document.querySelectorAll('.tab-content');
@@ -397,6 +398,28 @@
         }
 
         async function loadPassFailChart() {
+            const skillsData = `
+                 {
+                  user {
+                    transactions(
+                      where: {
+                        type: { _nin: ["xp","level","up","down"] }
+                      }
+                    ) {
+                      type
+                      amount
+                    }
+                      
+                    
+                  }
+        }`;
+                
+        const displaySkills = await executeGraphQLQuery(skillsData)
+                
+        console.log(displaySkills.user[0]);
+
+
+
             const query = `
                 {
                     user {
