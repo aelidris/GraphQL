@@ -8,7 +8,6 @@
         // User info elements
         const userInitial = document.getElementById('user-initial');
         const userName = document.getElementById('user-name');
-        const userId = document.getElementById('user-id');
         const userFullName = document.getElementById('user-fullName')
         const userEmail = document.getElementById('user-email')
         const totalXp = document.getElementById('total-xp');
@@ -110,7 +109,7 @@
             showProfilePage();
             
             // Load user data
-            loadUserData();
+            await loadUserData();
         }
 
         function logout() {
@@ -202,7 +201,6 @@
             userName.textContent = user.login;
             userFullName.textContent = `${user.firstName} ${user.lastName}`;
             userEmail.textContent = `${user.email}`
-            userId.textContent = `ID: ${user.id}`;
             userInitial.textContent = user.login.charAt(0).toUpperCase();
 
             // Show content, hide loading
