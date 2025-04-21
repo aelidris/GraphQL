@@ -649,7 +649,7 @@
             
             // Y-axis label
             const yLabel = document.createElementNS(svgNS, 'text');
-            yLabel.setAttribute('transform', `translate(25, ${margin.top + chartHeight / 2}) rotate(-90)`);
+            yLabel.setAttribute('transform', `translate(13, ${margin.top + chartHeight / 2}) rotate(-90)`);
             yLabel.setAttribute('text-anchor', 'middle');
             yLabel.textContent = 'Cumulative XP';
             chartGroup.appendChild(yLabel);
