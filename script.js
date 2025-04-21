@@ -9,8 +9,10 @@
         const userInitial = document.getElementById('user-initial');
         const userName = document.getElementById('user-name');
         const userId = document.getElementById('user-id');
+        const userFullName = document.getElementById('user-fullName')
+        const userEmail = document.getElementById('user-email')
         const totalXp = document.getElementById('total-xp');
-        const projectsCount = document.getElementById('projects-count');
+        const projectsCount = document.getElementById('transactions-count');
         const passRatio = document.getElementById('pass-ratio');
         const projectsList = document.getElementById('projects-list');
         
@@ -183,15 +185,22 @@
                     user {
                         id
                         login
+                        firstName
+                        lastName
+                        email
                     }
                 }
             `;
             
             const data = await executeGraphQLQuery(query);
             const user = data.user[0];
+            console.log(data);
+            
             
             // Update UI with user info
             userName.textContent = user.login;
+            userFullName.textContent = `${user.firstName} ${user.lastName}`;
+            userEmail.textContent = `${user.email}`
             userId.textContent = `ID: ${user.id}`;
             userInitial.textContent = user.login.charAt(0).toUpperCase();
 
@@ -202,53 +211,68 @@
 
         async function loadXpAndProjects() {
             const query = `
-                {
-                    user {
-                        id
-                        transactions(where: {type: {_eq: "xp"}}) {
-                            id
-                            amount
-                            createdAt
-                            path
-                        }
-                        progresses(order_by: {createdAt: desc}) {
-                            id
-                            grade
-                            path
-                            createdAt
-                            object {
-                                id
-                                name
-                                type
-                            }
-                        }
-                        results(order_by: {createdAt: desc}) {
-                            id
-                            grade
-                            path
-                            createdAt
-                            object {
-                                id
-                                name
-                                type
-                            }
-                        }
+               {
+                  user {
+                    id
+                    # Get 3 most recent passed projects (from both progresses and results)
+                    progresses(
+                      where: { grade: { _gte: 1 } }
+                      order_by: { createdAt: desc }
+                      limit: 3
+                    ) {
+                      id
+                      path
+                      grade
+                      createdAt
+                      object {
+                        name
+                      }
                     }
+                    results(
+                      where: { grade: { _gte: 1 } }
+                      order_by: { createdAt: desc }
+                      limit: 3
+                    ) {
+                      id
+                      path
+                      grade
+                      createdAt
+                      object {
+                        name
+                      }
+                    }
+                    # Get all XP transactions that might match these projects
+                    transactions(
+                      where: {
+                        type: { _eq: "xp" }
+                        _and: [
+                          { path: { _niregex: "piscine-go" } }
+                          { path: { _niregex: "piscine-js/" } }
+                        ]
+                      }
+                    ) {
+                      amount
+                      path
+                    }
+                  }
                 }
             `;
             
             const data = await executeGraphQLQuery(query);
             const user = data.user[0];
+            console.log(user.transactions.length);
             
             // Calculate total XP
             const totalXpAmount = user.transactions.reduce((sum, tx) => sum + tx.amount, 0);
-            totalXp.textContent = Math.round(totalXpAmount).toLocaleString();
+            totalXp.textContent = Math.round(totalXpAmount/1000).toLocaleString()+' kB';
             
             // Get projects from both results and progresses
             // First check results for projects
             let projects = user.results.filter(r => 
                 r.object && r.object.type === "project" && r.path && !r.path.includes("piscine")
             );
+
+            
             
             // If no projects in results, try progresses
             if (projects.length === 0) {
@@ -267,7 +291,7 @@
             }
             
             // Count projects
-            projectsCount.textContent = projects.length;
+            projectsCount.textContent = user.transactions.length;
             
             // Calculate pass ratio - only if we have projects
             const passedProjects = projects.filter(p => p.grade >= 1).length;
@@ -279,38 +303,45 @@
             // Display recent projects
             projectsLoading.classList.add('hidden');
             
+            // For progresses and results (all are passed now)
             if (projects.length > 0) {
-                // Sort by most recent first
-                const sortedProjects = [...projects].sort((a, b) => 
-                    new Date(b.createdAt) - new Date(a.createdAt)
-                ).slice(0, 5); // Take only 5 most recent
-                
                 projectsList.innerHTML = '';
-                sortedProjects.forEach(project => {
-                    // Extract project name from path
-                    let projectName = "Unknown Project";
-                    if (project.path) {
-                        const pathParts = project.path.split('/');
-                        projectName = pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2] || "Unknown Project";
-                    }
+                
+                // Combine and sort projects
+                const recentProjects = [
+                    ...user.progresses,
+                    ...user.results
+                ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                 .slice(0, 3);
+            
+                recentProjects.forEach(project => {
+                    // Get project name
+                    const pathParts = project.path.split('/').filter(Boolean);
+                    const projectName = project.object?.name || pathParts[pathParts.length - 1] || "Unknown Project";
                     
-                    const status = project.grade >= 1 ? 'PASS' : 'FAIL';
-                    const statusClass = project.grade >= 1 ? 'pass' : 'fail';
+                    // Find the EXACT matching transaction
+                    const projectTransaction = user.transactions.find(tx => 
+                        tx.path === project.path || 
+                        tx.path.endsWith(project.path.split('/').filter(Boolean).join('/'))
+                    );
                     
+                    // Display with exact XP amount
                     const listItem = document.createElement('li');
-                    listItem.className = 'project-item';
+                    listItem.className = 'project-item pass';
                     listItem.innerHTML = `
-                        <div>${projectName}</div>
-                        <div class="${statusClass}">${status}</div>
+                        <div>${projectName} ${projectTransaction ? `(${projectTransaction.amount/1000} kB)` : ''}</div>
                     `;
-                    
                     projectsList.appendChild(listItem);
                 });
             } else {
-                // No projects found
-                projectsList.innerHTML = '<li class="project-item">No projects found. You might need to complete some projects first.</li>';
+                projectsList.innerHTML = '<li class="project-item">No passed projects found.</li>';
             }
         }
+
+
+
+
+
 
         async function loadXpTimeChart() {
             const query = `
