@@ -486,7 +486,7 @@
                 text.setAttribute("y", labelY);
                 text.setAttribute("text-anchor", "middle");
                 text.setAttribute("dominant-baseline", "middle");
-                text.setAttribute("font-size", "10");
+                text.setAttribute("font-size", "13");
                 text.textContent = skill;
                 svg.appendChild(text);
             });
