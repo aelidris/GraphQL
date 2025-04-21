@@ -169,8 +169,8 @@
                 await loadXpAndProjects();
                 
                 // Load charts data
-                loadXpTimeChart();
-                loadPassFailChart();
+                await loadXpTimeChart();
+                await loadPassFailChart();
                 
             } catch (error) {
                 console.error('Error loading user data:', error);
