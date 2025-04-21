@@ -14,6 +14,7 @@
         const totalXp = document.getElementById('total-xp');
         const projectsCount = document.getElementById('transactions-count');
         const passRatio = document.getElementById('pass-ratio');
+        const userLevel = document.getElementById('user-level')
         const projectsList = document.getElementById('projects-list');
         
         // Loading elements
@@ -265,7 +266,7 @@
             const user = data.user[0];
 
             const transactions = user.transactions
-
+            
             createXpTimeChart(transactions);
 
             
@@ -300,7 +301,35 @@
             projectsCount.textContent = user.transactions.length;
             
             passRatio.textContent = `${(user.auditRatio).toFixed(1)}`;
-            
+
+
+            const lvlQuery = `
+            {
+                  user {
+                    transactions(
+                      where: {
+                        type: { _eq: "level" }
+                        _and: [
+                          { path: { _niregex: "piscine-go" } }
+                          { path: { _niregex: "piscine-js" } }
+                        ]
+                      }
+                      
+                    ) {
+                      amount
+                      createdAt
+                    }
+                  }
+            }`;
+
+            const levelData = await executeGraphQLQuery(lvlQuery);
+
+            // Get the last element in the array (length-1)
+            const tr = levelData.user[0].transactions;
+            const lastLevel = tr[tr.length - 1].amount;
+            userLevel.textContent = `${lastLevel}`;
+
+            console.log("Last Level:", lastLevel);
             // Display recent projects
             projectsLoading.classList.add('hidden');
             
