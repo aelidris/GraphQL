@@ -611,10 +611,12 @@
             path.setAttribute('stroke-width', 3);
             chartGroup.appendChild(path);
             
+            console.log("processedData", processedData);
+            
             // Add data points for significant transactions
             processedData.forEach((d, i) => {
                 // Only add points for significant XP gains or first/last points
-                if (i === 0 || i === processedData.length - 1 || d.amount > xpMax * 0.05) {
+                if (i === 0 || i === processedData.length - 1 || d.amount > xpMax * 0.01) {
                     const circle = document.createElementNS(svgNS, 'circle');
                     circle.setAttribute('cx', xScale(d.date));
                     circle.setAttribute('cy', yScale(d.xp));
@@ -636,8 +638,8 @@
                         tooltip.innerHTML = `
                             <strong>${projectName}</strong><br>
                             Date: ${d.date.toLocaleDateString()}<br>
-                            XP: ${Math.round(d.amount).toLocaleString()}<br>
-                            Total: ${Math.round(d.xp).toLocaleString()}
+                            XP: ${Math.round(d.amount/1000).toLocaleString()+' kB'}<br>
+                            Total: ${Math.round(d.xp/1000).toLocaleString()+' kB'}
                         `;
                     });
                     
