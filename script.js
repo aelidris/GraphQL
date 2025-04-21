@@ -435,7 +435,6 @@
             const centerX = width / 2;
             const centerY = height / 2;
             const radius = Math.min(width, height) * 0.4;
-            const maxAmount = Math.max(...Object.values(skillAmounts), 1); // Avoid division by zero
         
             // Create SVG element
             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -450,8 +449,6 @@
             skills.forEach((skill, index) => {
                 const angle = index * angleStep;
                 const amount = skillAmounts[skill] || 0;
-                const normalizedAmount = amount / maxAmount;
-                const segmentRadius = radius * normalizedAmount;
         
                 // Create skill segment (circle sector)
                 const endAngle = angle + angleStep;
