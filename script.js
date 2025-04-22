@@ -339,8 +339,10 @@
                 const recentProjects = [
                     ...user.progresses,
                     ...user.results
-                ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-                 .slice(0, 3);
+                ].slice(0, 3);
+
+                 console.log(recentProjects);
+                 
             
                 recentProjects.forEach(project => {
                     // Get project name
