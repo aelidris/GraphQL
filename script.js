@@ -430,7 +430,7 @@
             skillsChart.innerHTML = ''; // Clear previous content
         
             // SVG dimensions
-            const width = 500;
+            const width = 800;
             const height = 500;
             const centerX = width / 2;
             const centerY = height / 2;
