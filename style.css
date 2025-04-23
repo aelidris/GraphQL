@@ -116,6 +116,30 @@ header {
     margin-bottom: 30px;
 }
 
+.user-header {
+    font-size: 1.5rem; /* Responsive font size */
+    margin: 0.5em 0;
+    /* text-align: center; */
+    word-break: break-word; /* Prevents overflow on small screens */
+    line-height: 1.2; /* Better readability */
+  }
+
+@media (max-width: 780px) {
+    .user-header {
+      font-size: 1rem;
+      /* padding: 0 10px; */
+    }
+  }
+  
+  /* Medium devices (tablets) */
+  @media (min-width: 577px) and (max-width: 992px) {
+    .user-header {
+      font-size: 1.5rem;
+    }
+  }
+  
+
+  
 .card h2 {
     border-bottom: 2px solid var(--primary-color);
     padding-bottom: 10px;
