@@ -451,87 +451,87 @@
                 return 100 * Math.pow(amount/100, 0.4); // Adjust 0.7 for more/less scaling
             }
 
-skills.forEach((skill, index) => {
-    const angle = index * angleStep;
-    const rawAmount = skillAmounts[skill] || 0;
-    
-    // Apply scaling to make small amounts more visible
-    const scaledAmount = scaleAmount(rawAmount);
-    const visualAmount = Math.min(100, scaledAmount); // Cap at 100%
-    
-    // Calculate the filled radius with scaled amount
-    const filledRadius = radius * (visualAmount / 100);
-    
-    // Rest of your path creation code remains the same...
-    const endAngle = angle + angleStep;
-    
-    // Create the filled (black) portion
-    const filledPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    filledPath.setAttribute("d", `
-        M${centerX},${centerY}
-        L${centerX + filledRadius * Math.cos(angle)},${centerY + filledRadius * Math.sin(angle)}
-        A${filledRadius},${filledRadius} 0 0,1 ${centerX + filledRadius * Math.cos(endAngle)},${centerY + filledRadius * Math.sin(endAngle)}
-        Z
-    `);
-    filledPath.setAttribute("fill", "#000000");
-    filledPath.setAttribute("stroke", "none");
-    
-    // Create the empty (white) portion
-    const emptyPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    emptyPath.setAttribute("d", `
-        M${centerX + filledRadius * Math.cos(angle)},${centerY + filledRadius * Math.sin(angle)}
-        L${centerX + radius * Math.cos(angle)},${centerY + radius * Math.sin(angle)}
-        A${radius},${radius} 0 0,1 ${centerX + radius * Math.cos(endAngle)},${centerY + radius * Math.sin(endAngle)}
-        L${centerX + filledRadius * Math.cos(endAngle)},${centerY + filledRadius * Math.sin(endAngle)}
-        A${filledRadius},${filledRadius} 0 0,0 ${centerX + filledRadius * Math.cos(angle)},${centerY + filledRadius * Math.sin(angle)}
-    `);
-    emptyPath.setAttribute("fill", "#ffffff");
-    emptyPath.setAttribute("stroke", "#000000");
-    emptyPath.setAttribute("stroke-width", "1");
-    
-    // Create invisible hover area (full segment)
-    const hoverPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    hoverPath.setAttribute("d", `
-        M${centerX},${centerY}
-        L${centerX + radius * Math.cos(angle)},${centerY + radius * Math.sin(angle)}
-        A${radius},${radius} 0 0,1 ${centerX + radius * Math.cos(endAngle)},${centerY + radius * Math.sin(endAngle)}
-        Z
-    `);
-    hoverPath.setAttribute("fill", "transparent");
-    hoverPath.setAttribute("data-skill", skill);
-    hoverPath.setAttribute("data-amount", rawAmount); // Show original amount in tooltip
-    
-    // Hover effects
-    hoverPath.addEventListener('mouseover', function() {
-        filledPath.style.opacity = '0.8';
-        emptyPath.style.opacity = '0.8';
-        showTooltip(skill, rawAmount); // Show original (unscaled) amount
-    });
-    hoverPath.addEventListener('mouseout', function() {
-        filledPath.style.opacity = '1';
-        emptyPath.style.opacity = '1';
-        hideTooltip();
-    });
-    
-    svg.appendChild(filledPath);
-    svg.appendChild(emptyPath);
-    svg.appendChild(hoverPath);
-    
-    // Labels (unchanged)
-    const labelAngle = angle + angleStep / 2;
-    const labelRadius = radius * 1.1;
-    const labelX = centerX + labelRadius * Math.cos(labelAngle);
-    const labelY = centerY + labelRadius * Math.sin(labelAngle);
-
-    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.setAttribute("x", labelX);
-    text.setAttribute("y", labelY);
-    text.setAttribute("text-anchor", "middle");
-    text.setAttribute("dominant-baseline", "middle");
-    text.setAttribute("font-size", "13");
-    text.textContent = skill;
-    svg.appendChild(text);
-});
+            skills.forEach((skill, index) => {
+                const angle = index * angleStep;
+                const rawAmount = skillAmounts[skill] || 0;
+                
+                // Apply scaling to make small amounts more visible
+                const scaledAmount = scaleAmount(rawAmount);
+                const visualAmount = Math.min(100, scaledAmount); // Cap at 100%
+                
+                // Calculate the filled radius with scaled amount
+                const filledRadius = radius * (visualAmount / 100);
+                
+                // Rest of your path creation code remains the same...
+                const endAngle = angle + angleStep;
+                
+                // Create the filled (black) portion
+                const filledPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                filledPath.setAttribute("d", `
+                    M${centerX},${centerY}
+                    L${centerX + filledRadius * Math.cos(angle)},${centerY + filledRadius * Math.sin(angle)}
+                    A${filledRadius},${filledRadius} 0 0,1 ${centerX + filledRadius * Math.cos(endAngle)},${centerY + filledRadius * Math.sin(endAngle)}
+                    Z
+                `);
+                filledPath.setAttribute("fill", "#000000");
+                filledPath.setAttribute("stroke", "none");
+                
+                // Create the empty (white) portion
+                const emptyPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                emptyPath.setAttribute("d", `
+                    M${centerX + filledRadius * Math.cos(angle)},${centerY + filledRadius * Math.sin(angle)}
+                    L${centerX + radius * Math.cos(angle)},${centerY + radius * Math.sin(angle)}
+                    A${radius},${radius} 0 0,1 ${centerX + radius * Math.cos(endAngle)},${centerY + radius * Math.sin(endAngle)}
+                    L${centerX + filledRadius * Math.cos(endAngle)},${centerY + filledRadius * Math.sin(endAngle)}
+                    A${filledRadius},${filledRadius} 0 0,0 ${centerX + filledRadius * Math.cos(angle)},${centerY + filledRadius * Math.sin(angle)}
+                `);
+                emptyPath.setAttribute("fill", "#ffffff");
+                emptyPath.setAttribute("stroke", "#000000");
+                emptyPath.setAttribute("stroke-width", "1");
+                
+                // Create invisible hover area (full segment)
+                const hoverPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                hoverPath.setAttribute("d", `
+                    M${centerX},${centerY}
+                    L${centerX + radius * Math.cos(angle)},${centerY + radius * Math.sin(angle)}
+                    A${radius},${radius} 0 0,1 ${centerX + radius * Math.cos(endAngle)},${centerY + radius * Math.sin(endAngle)}
+                    Z
+                `);
+                hoverPath.setAttribute("fill", "transparent");
+                hoverPath.setAttribute("data-skill", skill);
+                hoverPath.setAttribute("data-amount", rawAmount); // Show original amount in tooltip
+                
+                // Hover effects
+                hoverPath.addEventListener('mouseover', function() {
+                    filledPath.style.opacity = '0.8';
+                    emptyPath.style.opacity = '0.8';
+                    showTooltip(skill, rawAmount); // Show original (unscaled) amount
+                });
+                hoverPath.addEventListener('mouseout', function() {
+                    filledPath.style.opacity = '1';
+                    emptyPath.style.opacity = '1';
+                    hideTooltip();
+                });
+                
+                svg.appendChild(filledPath);
+                svg.appendChild(emptyPath);
+                svg.appendChild(hoverPath);
+                
+                // Labels (unchanged)
+                const labelAngle = angle + angleStep / 2;
+                const labelRadius = radius * 1.1;
+                const labelX = centerX + labelRadius * Math.cos(labelAngle);
+                const labelY = centerY + labelRadius * Math.sin(labelAngle);
+            
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", labelX);
+                text.setAttribute("y", labelY);
+                text.setAttribute("text-anchor", "middle");
+                text.setAttribute("dominant-baseline", "middle");
+                text.setAttribute("font-size", "13");
+                text.textContent = skill;
+                svg.appendChild(text);
+            });
         
             // Add center circle
             const centerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
