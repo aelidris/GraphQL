@@ -473,7 +473,7 @@
                     A${filledRadius},${filledRadius} 0 0,1 ${centerX + filledRadius * Math.cos(endAngle)},${centerY + filledRadius * Math.sin(endAngle)}
                     Z
                 `);
-                filledPath.setAttribute("fill", "#000000");
+                filledPath.setAttribute("fill", "#3498db");
                 filledPath.setAttribute("stroke", "none");
                 
                 // Create the empty (white) portion
@@ -486,7 +486,7 @@
                     A${filledRadius},${filledRadius} 0 0,0 ${centerX + filledRadius * Math.cos(angle)},${centerY + filledRadius * Math.sin(angle)}
                 `);
                 emptyPath.setAttribute("fill", "#ffffff");
-                emptyPath.setAttribute("stroke", "#000000");
+                emptyPath.setAttribute("stroke", "#ccc");
                 emptyPath.setAttribute("stroke-width", "1");
                 
                 // Create invisible hover area (full segment)
@@ -538,7 +538,7 @@
             centerCircle.setAttribute("cx", centerX);
             centerCircle.setAttribute("cy", centerY);
             centerCircle.setAttribute("r", radius * 0.2);
-            centerCircle.setAttribute("fill", "#000000");  // Changed to black
+            centerCircle.setAttribute("fill", "#fff"); 
             centerCircle.setAttribute("stroke", "#333");
             centerCircle.setAttribute("stroke-width", "1");
             svg.appendChild(centerCircle);
