@@ -446,87 +446,92 @@
             const skills = Object.keys(skillAmounts);
             const angleStep = (2 * Math.PI) / skills.length;
         
-            skills.forEach((skill, index) => {
-                const angle = index * angleStep;
-                const amount = skillAmounts[skill] || 0;
-                
-                // Calculate the filled radius (black portion)
-                const filledRadius = radius * (amount / 100);
-                
-                // Create skill segment (circle sector)
-                const endAngle = angle + angleStep;
-                
-                // Create TWO paths for each segment:
-                // 1. The black filled portion (from center to filledRadius)
-                const filledPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                filledPath.setAttribute("d", `
-                    M${centerX},${centerY}
-                    L${centerX + filledRadius * Math.cos(angle)},${centerY + filledRadius * Math.sin(angle)}
-                    A${filledRadius},${filledRadius} 0 0,1 ${centerX + filledRadius * Math.cos(endAngle)},${centerY + filledRadius * Math.sin(endAngle)}
-                    Z
-                `);
-                filledPath.setAttribute("fill", "#000000");
-                filledPath.setAttribute("stroke", "none");
-                
-                // 2. The white empty portion (from filledRadius to full radius)
-                const emptyPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                emptyPath.setAttribute("d", `
-                    M${centerX + filledRadius * Math.cos(angle)},${centerY + filledRadius * Math.sin(angle)}
-                    L${centerX + radius * Math.cos(angle)},${centerY + radius * Math.sin(angle)}
-                    A${radius},${radius} 0 0,1 ${centerX + radius * Math.cos(endAngle)},${centerY + radius * Math.sin(endAngle)}
-                    L${centerX + filledRadius * Math.cos(endAngle)},${centerY + filledRadius * Math.sin(endAngle)}
-                    A${filledRadius},${filledRadius} 0 0,0 ${centerX + filledRadius * Math.cos(angle)},${centerY + filledRadius * Math.sin(angle)}
-                `);
-                emptyPath.setAttribute("fill", "#ffffff");
-                emptyPath.setAttribute("stroke", "#000000");
-                emptyPath.setAttribute("stroke-width", "1");
-                
-                // Create an invisible full segment for hover detection
-                const hoverPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                hoverPath.setAttribute("d", `
-                    M${centerX},${centerY}
-                    L${centerX + radius * Math.cos(angle)},${centerY + radius * Math.sin(angle)}
-                    A${radius},${radius} 0 0,1 ${centerX + radius * Math.cos(endAngle)},${centerY + radius * Math.sin(endAngle)}
-                    Z
-                `);
-                hoverPath.setAttribute("fill", "transparent");
-                hoverPath.setAttribute("stroke", "none");
-                hoverPath.setAttribute("pointer-events", "visible");
-                hoverPath.setAttribute("data-skill", skill);
-                hoverPath.setAttribute("data-amount", amount);
-                
-                // Add hover effect to the invisible path
-                hoverPath.addEventListener('mouseover', function() {
-                    filledPath.style.opacity = '0.8';
-                    emptyPath.style.opacity = '0.8';
-                    showTooltip(skill, amount);
-                });
-                hoverPath.addEventListener('mouseout', function() {
-                    filledPath.style.opacity = '1';
-                    emptyPath.style.opacity = '1';
-                    hideTooltip();
-                });
-                
-                // Add all paths to SVG
-                svg.appendChild(filledPath);
-                svg.appendChild(emptyPath);
-                svg.appendChild(hoverPath);
-                
-                // Add skill label (same as before)
-                const labelAngle = angle + angleStep / 2;
-                const labelRadius = radius * 1.1;
-                const labelX = centerX + labelRadius * Math.cos(labelAngle);
-                const labelY = centerY + labelRadius * Math.sin(labelAngle);
-            
-                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                text.setAttribute("x", labelX);
-                text.setAttribute("y", labelY);
-                text.setAttribute("text-anchor", "middle");
-                text.setAttribute("dominant-baseline", "middle");
-                text.setAttribute("font-size", "13");
-                text.textContent = skill;
-                svg.appendChild(text);
-            });
+            // Add this scaling function before the skills.forEach loop
+            function scaleAmount(amount) {
+                return 100 * Math.pow(amount/100, 0.4); // Adjust 0.7 for more/less scaling
+            }
+
+skills.forEach((skill, index) => {
+    const angle = index * angleStep;
+    const rawAmount = skillAmounts[skill] || 0;
+    
+    // Apply scaling to make small amounts more visible
+    const scaledAmount = scaleAmount(rawAmount);
+    const visualAmount = Math.min(100, scaledAmount); // Cap at 100%
+    
+    // Calculate the filled radius with scaled amount
+    const filledRadius = radius * (visualAmount / 100);
+    
+    // Rest of your path creation code remains the same...
+    const endAngle = angle + angleStep;
+    
+    // Create the filled (black) portion
+    const filledPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    filledPath.setAttribute("d", `
+        M${centerX},${centerY}
+        L${centerX + filledRadius * Math.cos(angle)},${centerY + filledRadius * Math.sin(angle)}
+        A${filledRadius},${filledRadius} 0 0,1 ${centerX + filledRadius * Math.cos(endAngle)},${centerY + filledRadius * Math.sin(endAngle)}
+        Z
+    `);
+    filledPath.setAttribute("fill", "#000000");
+    filledPath.setAttribute("stroke", "none");
+    
+    // Create the empty (white) portion
+    const emptyPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    emptyPath.setAttribute("d", `
+        M${centerX + filledRadius * Math.cos(angle)},${centerY + filledRadius * Math.sin(angle)}
+        L${centerX + radius * Math.cos(angle)},${centerY + radius * Math.sin(angle)}
+        A${radius},${radius} 0 0,1 ${centerX + radius * Math.cos(endAngle)},${centerY + radius * Math.sin(endAngle)}
+        L${centerX + filledRadius * Math.cos(endAngle)},${centerY + filledRadius * Math.sin(endAngle)}
+        A${filledRadius},${filledRadius} 0 0,0 ${centerX + filledRadius * Math.cos(angle)},${centerY + filledRadius * Math.sin(angle)}
+    `);
+    emptyPath.setAttribute("fill", "#ffffff");
+    emptyPath.setAttribute("stroke", "#000000");
+    emptyPath.setAttribute("stroke-width", "1");
+    
+    // Create invisible hover area (full segment)
+    const hoverPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    hoverPath.setAttribute("d", `
+        M${centerX},${centerY}
+        L${centerX + radius * Math.cos(angle)},${centerY + radius * Math.sin(angle)}
+        A${radius},${radius} 0 0,1 ${centerX + radius * Math.cos(endAngle)},${centerY + radius * Math.sin(endAngle)}
+        Z
+    `);
+    hoverPath.setAttribute("fill", "transparent");
+    hoverPath.setAttribute("data-skill", skill);
+    hoverPath.setAttribute("data-amount", rawAmount); // Show original amount in tooltip
+    
+    // Hover effects
+    hoverPath.addEventListener('mouseover', function() {
+        filledPath.style.opacity = '0.8';
+        emptyPath.style.opacity = '0.8';
+        showTooltip(skill, rawAmount); // Show original (unscaled) amount
+    });
+    hoverPath.addEventListener('mouseout', function() {
+        filledPath.style.opacity = '1';
+        emptyPath.style.opacity = '1';
+        hideTooltip();
+    });
+    
+    svg.appendChild(filledPath);
+    svg.appendChild(emptyPath);
+    svg.appendChild(hoverPath);
+    
+    // Labels (unchanged)
+    const labelAngle = angle + angleStep / 2;
+    const labelRadius = radius * 1.1;
+    const labelX = centerX + labelRadius * Math.cos(labelAngle);
+    const labelY = centerY + labelRadius * Math.sin(labelAngle);
+
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", labelX);
+    text.setAttribute("y", labelY);
+    text.setAttribute("text-anchor", "middle");
+    text.setAttribute("dominant-baseline", "middle");
+    text.setAttribute("font-size", "13");
+    text.textContent = skill;
+    svg.appendChild(text);
+});
         
             // Add center circle
             const centerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
