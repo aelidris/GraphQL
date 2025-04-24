@@ -17,7 +17,6 @@
         const recentPassedProjects = document.getElementById('projects-list');
         
         // Loading elements
-        const userInfoLoading = document.getElementById('user-info-loading');
         const userInfoContent = document.getElementById('user-info-content');
         const projectsLoading = document.getElementById('projects-loading');
         const xpGraphLoading = document.getElementById('xp-graph-loading');
@@ -203,7 +202,6 @@
             userInitial.textContent = user.firstName.charAt(0).toUpperCase();
 
             // Show content, hide loading
-            userInfoLoading.classList.add('hidden');
             userInfoContent.classList.remove('hidden');
         }
 
