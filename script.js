@@ -201,7 +201,7 @@
             userName.textContent = user.login;
             userFullName.textContent = `${user.firstName} ${user.lastName}`;
             userEmail.textContent = `${user.email}`
-            userInitial.textContent = user.login.charAt(0).toUpperCase();
+            userInitial.textContent = user.firstName.charAt(0).toUpperCase();
 
             // Show content, hide loading
             userInfoLoading.classList.add('hidden');
