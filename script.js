@@ -128,7 +128,7 @@
         }
 
         // GraphQL Queries
-        async function executeGraphQLQuery(query, variables = {}) {
+        async function executeGraphQLQuery(query) {
             const response = await fetch(GRAPHQL_ENDPOINT, {
                 method: 'POST',
                 headers: {
@@ -136,8 +136,7 @@
                     'Authorization': `Bearer ${authToken}`
                 },
                 body: JSON.stringify({
-                    query,
-                    variables
+                    query
                 })
             });
 
