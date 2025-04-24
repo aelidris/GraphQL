@@ -822,23 +822,3 @@
 document.addEventListener('DOMContentLoaded', () => {
 checkAuth();
 });
-
-// Responsive handling
-window.addEventListener('resize', () => {
-// If charts data exists, redraw charts on window resize
-const xpChartTab = document.getElementById('xp-graph');
-const passFailTab = document.getElementById('skill-graph');
-
-if (xpChartTab.classList.contains('active')) {
-const xpTimeGraphData = xpTimeGraph.__data__;
-if (xpTimeGraphData) {
-createXpTimeChart(xpTimeGraphData);
-}
-} else if (passFailTab.classList.contains('active')) {
-const passedData = passFailChart.__data__?.passed;
-const failedData = passFailChart.__data__?.failed;
-if (passedData !== undefined && failedData !== undefined) {
-createPassFailChart(passedData, failedData);
-}
-}
-});
