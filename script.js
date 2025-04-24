@@ -21,7 +21,6 @@
         const userInfoContent = document.getElementById('user-info-content');
         const projectsLoading = document.getElementById('projects-loading');
         const xpGraphLoading = document.getElementById('xp-graph-loading');
-        const passFailLoading = document.getElementById('pass-fail-loading');
 
         // Graph elements
         const xpTimeGraph = document.getElementById('xp-time-graph');
