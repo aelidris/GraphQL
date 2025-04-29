@@ -177,8 +177,14 @@ async function loadUserPicture(data, username) {
     const login = usersPicID.get(username)
     const imgID = login ? `3P3A${login}.JPG` : `${username}.jpg`
     const image = document.createElement('img');
+    image.alt = `${username}'s profile picture`;
     image.src = `https://discord.zone01oujda.ma/assets/pictures/${imgID}?format=webp&width=250&height=250`
-    
+
+    // Open image in a new tab when clicked
+    image.addEventListener('click', () => {
+        window.open(image.src, '_blank');
+    });
+
     userInitial.innerHTML = '';
     userInitial.appendChild(image);
 }
