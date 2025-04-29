@@ -355,7 +355,7 @@
                     const listItem = document.createElement('li');
                     listItem.className = 'project-item pass';
                     listItem.innerHTML = `
-                        <div>${projectName} ${projectTransaction ? `(${projectTransaction.amount/1000} kB)` : ''}</div>
+                        <div>${projectName} ${projectTransaction ? `(${(projectTransaction.amount/1000).toFixed(2)} kB)` : ''}</div>
                     `;
                     recentPassedProjects.appendChild(listItem);
                 });
