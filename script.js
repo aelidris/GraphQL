@@ -129,51 +129,45 @@ function showLoginPage() {
 
 // GraphQL Queries
 async function executeGraphQLQuery(query) {
-    const response = await fetch(GRAPHQL_ENDPOINT, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-            query
-        })
-    });
+    try {
+        const response = await fetch(GRAPHQL_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                query
+            })
+        });
 
-    if (!response.ok) {
-        throw new Error('GraphQL query failed');
+        const data = await response.json();
+
+        if (data.errors) {
+            console.error('GraphQL errors:', data.errors);
+            throw data.errors[0].message;
+        }
+
+        return data.data;
+    } catch (error) {
+        // If unauthorized, redirect to login
+        console.error('Error loading user data:', error);
+        logout();
+        return;
     }
-
-    const data = await response.json();
-
-    if (data.errors) {
-        console.error('GraphQL errors:', data.errors);
-        throw new Error(data.errors[0].message);
-    }
-
-    return data.data;
 }
 
 // Data Loading Functions
 async function loadUserData() {
-    try {
-        // Get basic user info
-        await loadBasicUserInfo();
+    // Get basic user info
+    await loadBasicUserInfo();
 
-        // Load XP and projects data
-        await loadXpAndProjects();
+    // Load XP and projects data
+    await loadXpAndProjects();
 
-        // Load charts data
-        await loadXpTimeChart();
-        await loadSkillsChart();
-
-    } catch (error) {
-        console.error('Error loading user data:', error);
-        // If unauthorized, redirect to login
-        if (error.message.includes('unauthorized')) {
-            logout();
-        }
-    }
+    // Load charts data
+    await loadXpTimeChart();
+    await loadSkillsChart();
 }
 
 async function loadBasicUserInfo() {
