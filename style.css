@@ -42,10 +42,33 @@ body {
     box-shadow: var(--shadow);
 }
 
+.login-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
 .login-container h1 {
-    margin-top: 0%;
+    margin: 0 0 25px 0;
     text-align: center;
     color: var(--primary-color);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    padding-bottom: 15px;
+}
+
+.login-container h1::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    border-radius: 2px;
 }
 
 @media (width < 480px) {
@@ -63,7 +86,7 @@ body {
 label {
     display: block;
     margin-bottom: 8px;
-    font-weight: 600;
+    font-size: 1rem;
 }
 
 input {
