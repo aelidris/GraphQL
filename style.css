@@ -162,26 +162,6 @@ header {
     font-size: 0.9rem;
 }
 
-@media (width < 576px) {
-    .header-content {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .user-info {
-        margin-bottom: 15px;
-        width: 100%;
-    }
-    
-    .logout-btn {
-        align-self: flex-end;
-    }
-    
-    .user-header {
-        font-size: 1.2rem;
-    }
-}
-
 /* Profile Grid Layout */
 .profile-grid {
     display: grid;
