@@ -89,6 +89,7 @@ button {
 
 button:hover {
     background-color: #2980b9;
+    color: white;
 }
 
 .error-message {
@@ -120,7 +121,7 @@ header {
     flex-wrap: wrap;
 }
 
-.avatar {
+.avatar img {
     width: 60px;
     height: 60px;
     border-radius: 50%;
@@ -132,6 +133,8 @@ header {
     color: white;
     margin-right: 20px;
     flex-shrink: 0;
+    cursor: pointer;
+    z-index: 1000;
 }
 
 .user-profile {

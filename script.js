@@ -170,29 +170,40 @@ async function loadUserData() {
     await loadSkillsChart();
 }
 
+async function loadUserPicture(data, username) {
+    const profile = {};
+
+    profile.user = data;
+    const login = usersPicID.get(username)
+    const imgID = login ? `3P3A${login}.JPG` : `${username}.jpg`
+    const image = document.createElement('img');
+    image.src = `https://discord.zone01oujda.ma/assets/pictures/${imgID}?format=webp&width=250&height=250`
+    
+    userInitial.innerHTML = '';
+    userInitial.appendChild(image);
+}
+
 async function loadBasicUserInfo() {
     const query = `
-                {
-                    user {
-                        id
-                        login
-                        firstName
-                        lastName
-                        email
-                    }
-                }
-            `;
+        {
+            user {
+                id
+                login
+                firstName
+                lastName
+                email
+            }
+        }
+    `;
 
     const data = await executeGraphQLQuery(query);
     const user = data.user[0];
-    console.log(data);
-
+    await loadUserPicture(data, user.login);
 
     // Update UI with user info
     userName.textContent = user.login;
     userFullName.textContent = `${user.firstName} ${user.lastName}`;
     userEmail.textContent = `${user.email}`
-    userInitial.textContent = user.firstName.charAt(0).toUpperCase();
 
     // Show content, hide loading
     userInfoContent.classList.remove('hidden');
