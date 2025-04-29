@@ -266,7 +266,7 @@
             
             // Calculate total XP
             const totalXpAmount = user.transactions.reduce((sum, tx) => sum + tx.amount, 0);
-            totalXp.textContent = Math.round(totalXpAmount/1000).toLocaleString()+' kB';
+            totalXp.textContent = (totalXpAmount/1000).toFixed(2).toLocaleString()+' kB';
             
             // Get projects from both results and progresses
             // First check results for projects
@@ -795,8 +795,8 @@
                         tooltip.innerHTML = `
                             <strong>${projectName}</strong><br>
                             Date: ${d.date.toLocaleDateString()}<br>
-                            XP: ${Math.round(d.amount/1000).toLocaleString()+' kB'}<br>
-                            Total: ${Math.round(d.xp/1000).toLocaleString()+' kB'}
+                            XP: ${(d.amount/1000).toFixed(2).toLocaleString()+' kB'}<br>
+                            Total: ${(d.xp/1000).toFixed(2).toLocaleString()+' kB'}
                         `;
                     });
                     
