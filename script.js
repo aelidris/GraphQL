@@ -146,13 +146,14 @@ async function loadUserPicture(data, username) {
     image.src = `https://discord.zone01oujda.ma/assets/pictures/${imgID}?format=webp&width=250&height=250`
     
     image.onerror = function() {
+        userInitial.innerHTML = '';
         userInitial.textContent = `${username.charAt(0)}`; 
     }
 
     image.addEventListener('click', () => {
         window.open(image.src, '_blank');
     });
-
+    userInitial.innerHTML = '';
     userInitial.appendChild(image);   
 }
 
