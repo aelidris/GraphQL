@@ -184,16 +184,19 @@ header {
 }
 
 .user-header {
-    font-size: 15px !important;
+    font-size: 17px;
     font-weight: 900;
     margin: 0.2em 0;
     word-break: break-word;
-    line-height: 1.7;
+    line-height: 1;
 }
 
-#user-fullName, #user-name, #user-email {
-    font-size: 0.9rem;
+@media (width < 360px) {
+    .user-header{
+        font-size: 14px;
+    }
 }
+
 
 /* Profile Grid Layout */
 .profile-grid {
@@ -244,6 +247,7 @@ header {
         min-width: 80px;
         padding: 10px 5px;
     }
+    
 }
 
 .stat-value {
@@ -261,10 +265,11 @@ header {
     .stat-value {
         font-size: 24px;
     }
-    
+   
     .stat-label {
         font-size: 12px;
     }
+    
 }
 
 /* Projects List */
@@ -290,6 +295,7 @@ header {
         font-size: 16px;
         padding: 12px 8px;
     }
+    
 }
 
 .project-item:last-child {
@@ -336,6 +342,7 @@ header {
         font-size: 14px;
         text-align: center;
     }
+    
 }
 
 .tab-button.active {
@@ -442,6 +449,7 @@ svg {
         margin-right: 10px;
         margin-bottom: 6px;
     }
+    
 }
 
 .legend-color {
@@ -475,6 +483,7 @@ svg {
         height: 30px;
         border-width: 3px;
     }
+    
 }
 
 @keyframes spin {
