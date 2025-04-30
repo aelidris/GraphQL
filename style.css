@@ -158,8 +158,8 @@ header {
 
 #user-initial {
     margin-right: 20px;
-    width: 60px;              
-    height: 60px;              
+    width: 80px;              
+    height: 80px;              
     border-radius: 50%;       
     background-color: var(--secondary-color); 
     color: white;          
@@ -172,8 +172,8 @@ header {
 }
 
 .avatar img {
-    width: 60px;
-    height: 60px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
     background-color: var(--secondary-color);
     cursor: pointer;
@@ -184,10 +184,11 @@ header {
 }
 
 .user-header {
+    font-size: 15px !important;
     font-weight: 900;
     margin: 0.2em 0;
     word-break: break-word;
-    line-height: 1;
+    line-height: 1.7;
 }
 
 #user-fullName, #user-name, #user-email {
