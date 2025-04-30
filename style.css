@@ -131,6 +131,7 @@ button:hover {
     margin-top: 15px;
     display: none;
     font-size: 14px;
+    text-align: center;
 }
 
 /* Profile Page Header */

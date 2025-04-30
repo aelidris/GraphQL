@@ -34,18 +34,13 @@ const tabContents = document.querySelectorAll('.tab-content');
 tabButtons.forEach(button => {
     button.addEventListener('click', () => {
         const tabId = button.getAttribute('data-tab');
-
-        // Update active button
         tabButtons.forEach(btn => btn.classList.remove('active'));
         button.classList.add('active');
-
-        // Update active content
         tabContents.forEach(content => content.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
     });
 });
 
-// Global variables
 let authToken = '';
 const API_URL = 'https://learn.zone01oujda.ma/api';
 const GRAPHQL_ENDPOINT = `${API_URL}/graphql-engine/v1/graphql`;
@@ -60,61 +55,42 @@ function checkAuth() {
     }
 }
 
-// Event Listeners
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
-
-    try {
-        await login(username, password);
-    } catch (error) {
-        errorMessage.style.display = 'block';
-        console.error('Login error:', error);
-    }
+    await login(username, password);
 });
 
 logoutBtn.addEventListener('click', () => {
     logout();
 });
 
-// Authentication Functions
 async function login(username, password) {
     const credentials = btoa(`${username}:${password}`);
-
     const response = await fetch(`${API_URL}/auth/signin`, {
         method: 'POST',
         headers: {
             'Authorization': `Basic ${credentials}`
         }
     });
-
     if (!response.ok) {
-        throw new Error('Invalid credentials');
+        errorMessage.style.display = 'block';
+        return;
     }
-
     const token = await response.json();
     authToken = token;
-
-    // Save token to local storage
     localStorage.setItem('authToken', token);
-
-    // Hide error message if it was visible
     errorMessage.style.display = 'none';
-
-    // Show profile page
     showProfilePage();
-
-    // Load user data
     await loadUserData();
 }
 
 function logout() {
-    // Clear token and return to login page
     localStorage.removeItem('authToken');
     authToken = '';
     showLoginPage();
+    return;
 }
 
 function showProfilePage() {
@@ -127,7 +103,6 @@ function showLoginPage() {
     loginPage.classList.remove('hidden');
 }
 
-// GraphQL Queries
 async function executeGraphQLQuery(query) {
     try {
         const response = await fetch(GRAPHQL_ENDPOINT, {
@@ -140,32 +115,24 @@ async function executeGraphQLQuery(query) {
                 query
             })
         });
-
         const data = await response.json();
 
         if (data.errors) {
-            console.error('GraphQL errors:', data.errors);
             throw data.errors[0].message;
         }
 
         return data.data;
+
     } catch (error) {
-        // If unauthorized, redirect to login
-        console.error('Error loading user data:', error);
-        logout();
-        return;
+        if (typeof error === 'string' && /JWT|Unauthorized|Invalid.*token|Token.*expired|Auth|Access.*denied/i.test(error)) {
+            logout();
+        }
     }
 }
 
-// Data Loading Functions
 async function loadUserData() {
-    // Get basic user info
     await loadBasicUserInfo();
-
-    // Load XP and projects data
     await loadXpAndProjects();
-
-    // Load charts data
     await loadXpTimeChart();
     await loadSkillsChart();
 }
@@ -826,9 +793,6 @@ function createXpTimeChart(transactions) {
     xpTimeGraph.appendChild(chartGroup);
 }
 
-
-
-// Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
 });
