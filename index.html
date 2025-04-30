@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' fill='%23E10098'>G</text></svg>">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' fill='%23E10098'>G</text></svg>">
     <link rel="stylesheet" href="./style.css">
 </head>
+
 <body>
     <!-- Login Page -->
     <div id="login-page" class="container">
@@ -48,38 +51,22 @@
                 <!-- User Info Card -->
                 <div class="card">
                     <h2>User Information</h2>
-                    <div id="user-info-content" class="hidden">
+                    <div id="user-info-content">
                         <div class="stats-container">
                             <div class="stat-item">
-                                <div class="stat-value" id="total-xp">
-                                    <div class="loading">
-                                        <div class="spinner"></div>
-                                    </div>
-                                </div>
+                                <div class="stat-value" id="total-xp"></div>
                                 <div class="stat-label">Total XP</div>
                             </div>
                             <div class="stat-item">
-                                <div class="stat-value" id="transactions-count">
-                                    <div class="loading">
-                                        <div class="spinner"></div>
-                                    </div>
-                                </div>
+                                <div class="stat-value" id="transactions-count"></div>
                                 <div class="stat-label">Transactions</div>
                             </div>
                             <div class="stat-item">
-                                <div class="stat-value" id="user-level">
-                                    <div class="loading">
-                                        <div class="spinner"></div>
-                                    </div>
-                                </div>
+                                <div class="stat-value" id="user-level"></div>
                                 <div class="stat-label">Level</div>
                             </div>
                             <div class="stat-item">
-                                <div class="stat-value" id="pass-ratio">
-                                    <div class="loading">
-                                        <div class="spinner"></div>
-                                    </div>
-                                </div>
+                                <div class="stat-value" id="pass-ratio"></div>
                                 <div class="stat-label">Audits ratio</div>
                             </div>
                         </div>
@@ -89,9 +76,7 @@
                 <!-- Projects Card -->
                 <div class="card">
                     <h2>Recent Projects</h2>
-                    <div class="loading" id="projects-loading">
-                        <div class="spinner"></div>
-                    </div>
+                    <div class="loading" id="projects-loading"></div>
                     <ul class="projects-list" id="projects-list"></ul>
                 </div>
             </div>
@@ -106,9 +91,6 @@
                     </div>
 
                     <div class="tab-content active" id="xp-graph">
-                        <div class="loading" id="xp-graph-loading">
-                            <div class="spinner"></div>
-                        </div>
                         <div class="graph-container" style="width: 100%; max-width: 800px; margin: 0 auto;">
                             <svg id="xp-time-graph" viewBox="0 0 800 400" preserveAspectRatio="xMidYMid meet"></svg>
                         </div>
@@ -125,6 +107,7 @@
 
     <script src="./script.js"></script>
     <script src="./usersPicID.js"></script>
-    
+
 </body>
+
 </html>

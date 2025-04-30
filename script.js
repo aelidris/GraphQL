@@ -17,7 +17,6 @@ const userLevel = document.getElementById('user-level')
 const recentPassedProjects = document.getElementById('projects-list');
 
 // Loading elements
-const userInfoContent = document.getElementById('user-info-content');
 const projectsLoading = document.getElementById('projects-loading');
 const xpGraphLoading = document.getElementById('xp-graph-loading');
 
@@ -133,33 +132,11 @@ async function executeGraphQLQuery(query) {
 async function loadUserData() {
     await loadBasicUserInfo();
     await loadXpAndProjects();
-    await loadXpTimeChart();
     await loadSkillsChart();
 }
 
-async function loadUserPicture(data, username) {
-    const profile = {};
-    profile.user = data;
-    const login = usersPicID.get(username)
-    const imgID = login ? `3P3A${login}.JPG` : `${username}.jpg`    
-    const image = document.createElement('img');
-    image.src = `https://discord.zone01oujda.ma/assets/pictures/${imgID}?format=webp&width=250&height=250`
-    
-    image.onerror = function() {
-        userInitial.innerHTML = '';
-        userInitial.textContent = `${username.charAt(0)}`; 
-    }
-
-    image.addEventListener('click', () => {
-        window.open(image.src, '_blank');
-    });
-    userInitial.innerHTML = '';
-    userInitial.appendChild(image);   
-}
-
-
 async function loadBasicUserInfo() {
-    const query = `
+    const userInfo = `
         {
             user {
                 id
@@ -171,53 +148,40 @@ async function loadBasicUserInfo() {
         }
     `;
 
-    const data = await executeGraphQLQuery(query);
-    const user = data.user[0];    
+    const data = await executeGraphQLQuery(userInfo);
+    const user = data.user[0];
     await loadUserPicture(data, user.login);
-
-    // Update UI with user info
-    userName.textContent = user.login;
     userFullName.textContent = `${user.firstName} ${user.lastName}`;
+    userName.textContent = user.login;
     userEmail.textContent = `${user.email}`
+}
 
-    // Show content, hide loading
-    userInfoContent.classList.remove('hidden');
+async function loadUserPicture(data, username) {
+    const profile = {};
+    profile.user = data;
+    const login = usersPicID.get(username)
+    const imgID = login ? `3P3A${login}.JPG` : `${username}.jpg`
+    const image = document.createElement('img');
+    image.src = `https://discord.zone01oujda.ma/assets/pictures/${imgID}?format=webp&width=250&height=250`
+
+    image.onerror = function () {
+        userInitial.innerHTML = '';
+        userInitial.textContent = `${username.charAt(0)}`;
+    }
+
+    image.addEventListener('click', () => {
+        window.open(image.src, '_blank');
+    });
+    userInitial.innerHTML = '';
+    userInitial.appendChild(image);
 }
 
 async function loadXpAndProjects() {
-    const query = `
+    const totalXPrecentProjects = `
                {
                   user {
                   auditRatio
                     id
-                    # Get 3 most recent passed projects (from both progresses and results)
-                    progresses(
-                      where: { grade: { _gte: 1 } }
-                      order_by: { createdAt: desc }
-                      limit: 3
-                    ) {
-                      id
-                      path
-                      grade
-                      createdAt
-                      object {
-                        name
-                      }
-                    }
-                    results(
-                      where: { grade: { _gte: 1 } }
-                      order_by: { createdAt: desc }
-                      limit: 3
-                    ) {
-                      id
-                      path
-                      grade
-                      createdAt
-                      object {
-                        name
-                      }
-                    }
-                    # Get all XP transactions that might match these projects
                     transactions(
                       where: {
                         type: { _eq: "xp" }
@@ -235,14 +199,10 @@ async function loadXpAndProjects() {
                 }
             `;
 
-    const data = await executeGraphQLQuery(query);
-
+    const data = await executeGraphQLQuery(totalXPrecentProjects);
     const user = data.user[0];
-
     const transactions = user.transactions
-
     createXpTimeChart(transactions);
-
 
     // Calculate total XP
     const totalXpAmount = user.transactions.reduce((sum, tx) => sum + tx.amount, 0);
@@ -252,37 +212,12 @@ async function loadXpAndProjects() {
         totalXp.textContent = (totalXpAmount / 1000).toFixed(0) + ' kB'
     )
 
-    console.log(user);
-
-    // Get projects from both results and progresses
-    // First check results for projects
     let projects = user.transactions.filter(r => {
         if (!r.path) return false;
         return !r.path.toLowerCase().includes("checkpoint");
     }).slice(-3).reverse();
-    console.log(projects);
-    console.log(projects.length);
-
-    // If no projects in results, try progresses
-    if (projects.length === 0) {
-        projects = user.progresses.filter(p =>
-            p.object && p.object.type === "project" && p.path && !p.path.includes("piscine")
-        );
-    }
-
-    // If still no projects, check for any result/progress with a path containing typical project identifiers
-    if (projects.length === 0) {
-        const projectKeywords = ["graphql", "profile", "ascii-art", "groupie-tracker", "social-network", "forum"];
-
-        projects = [...user.results, ...user.progresses].filter(item =>
-            item.path && projectKeywords.some(keyword => item.path.toLowerCase().includes(keyword))
-        );
-    }
-
     transactionsCount.textContent = user.transactions.length;
-
     auditRatio.textContent = `${(user.auditRatio).toFixed(1)}`;
-
 
     const lvlQuery = `
             {
@@ -304,46 +239,23 @@ async function loadXpAndProjects() {
             }`;
 
     const levelData = await executeGraphQLQuery(lvlQuery);
-
-    // Get the last element in the array (length-1)
     const tr = levelData.user[0].transactions;
     const lastLevel = tr[tr.length - 1].amount;
     userLevel.textContent = `${lastLevel}`;
 
-    console.log("Last Level:", lastLevel);
-    console.log(projects);
-    console.log(user);
     // Display recent projects
     projectsLoading.classList.add('hidden');
 
-    // For progresses and results (all are passed now)
-    console.log(projects.length);
     if (projects.length > 0) {
         recentPassedProjects.innerHTML = '';
-
-        // Combine and sort projects
-        const recentProjects = projects;
-
-        console.log(recentProjects);
-
-
-        recentProjects.forEach(project => {
-            // Get project name
+        projects.forEach(project => {
             const pathParts = project.path.split('/').filter(Boolean);
-            const projectName = project.object?.name || pathParts[pathParts.length - 1] || "Unknown Project";
-
-            // Find the EXACT matching transaction
-            const projectTransaction = user.transactions.find(tx =>
-                tx.path === project.path ||
-                tx.path.endsWith(project.path.split('/').filter(Boolean).join('/'))
-            );
-
-            // Display with exact XP amount
+            const projectName = pathParts[pathParts.length - 1] || "Unknown Project";
             const listItem = document.createElement('li');
             listItem.className = 'project-item pass';
             listItem.innerHTML = `
-                        <div>${projectName} ${projectTransaction ? `(${(projectTransaction.amount / 1000).toFixed(2)} kB)` : ''}</div>
-                    `;
+                <div>${projectName} (${(project.amount / 1000).toFixed(2)} kB)</div>
+            `;
             recentPassedProjects.appendChild(listItem);
         });
     } else {
@@ -351,27 +263,135 @@ async function loadXpAndProjects() {
     }
 }
 
-async function loadXpTimeChart() {
+function createXpTimeChart(transactions) {
+    xpTimeGraph.innerHTML = '';
+    // If no data, show empty state
+    if (!transactions || transactions.length === 0) {
+        xpTimeGraph.innerHTML = '<text x="50%" y="50%" text-anchor="middle">No XP data available</text>';
+        return;
+    }
+    let cumulativeXp = 0;
+    const sortedTransactions = [...transactions].sort((a, b) =>
+        new Date(a.createdAt) - new Date(b.createdAt)
+    );
 
-    const query = `
-                {
-                    user {
-                        transactions(where: {type: {_eq: "xp"}}, order_by: {createdAt: asc}) {
-                            amount
-                            createdAt
-                            path
-                        }
-                    }
-                }
-            `;
+    const data = sortedTransactions.map(tx => {
+        cumulativeXp += tx.amount;
+        return {
+            date: new Date(tx.createdAt),
+            xp: cumulativeXp,
+            amount: tx.amount,
+            path: tx.path
+        };
+    });
 
-    const data = await executeGraphQLQuery(query);
-    const transactions = data.user[0].transactions;
+    const width = xpTimeGraph.clientWidth || 800;
+    const height = 400;
+    const margin = { top: 40, right: 40, bottom: 60, left: 80 };
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
 
+    const dateMin = data[0].date;
+    const dateMax = data[data.length - 1].date;
+    const xpMax = data[data.length - 1].xp;
 
-    // Create XP over time chart
-    // createXpTimeChart(transactions);
-    xpGraphLoading.classList.add('hidden');
+    const xScale = (date) => {
+        return margin.left + ((date - dateMin) / (dateMax - dateMin)) * chartWidth;
+    };
+
+    const yScale = (y) => {
+        return height - margin.bottom - (y / xpMax) * chartHeight;
+    };
+
+    let svg = `
+        <!-- Axes -->
+        <line x1="${margin.left}" y1="${height - margin.bottom}" x2="${width - margin.right}" y2="${height - margin.bottom}" class="axis-line" />
+        <line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${height - margin.bottom}" class="axis-line" />
+        
+        <!-- Labels -->
+        <text x="${margin.left + chartWidth / 2}" y="${height - 15}" text-anchor="middle">Timeline</text>
+        <text transform="translate(13, ${margin.top + chartHeight / 2}) rotate(-90)" text-anchor="middle">Cumulative XP</text>
+        <text x="${margin.left + chartWidth / 2}" y="${margin.top - 10}" text-anchor="middle" font-weight="bold">XP Progress Over Time</text>
+    `;
+
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const tickCount = Math.min(5, data.length);
+    const dateRange = dateMax - dateMin;
+
+    for (let i = 0; i < tickCount; i++) {
+        const tickDate = new Date(dateMin.getTime() + (dateRange * i / (tickCount - 1)));
+        const tickX = xScale(tickDate);
+
+        svg += `
+            <line x1="${tickX}" y1="${height - margin.bottom}" x2="${tickX}" y2="${height - margin.bottom + 5}" stroke="#666" />
+            <text x="${tickX}" y="${height - margin.bottom + 20}" text-anchor="middle" class="axis-text">
+                ${monthNames[tickDate.getMonth()]} ${tickDate.getFullYear()}
+            </text>
+        `;
+    }
+
+    const yTickCount = 5;
+    for (let i = 0; i <= yTickCount; i++) {
+        const tickValue = (xpMax / yTickCount) * i;
+        const tickY = yScale(tickValue);
+
+        svg += `
+            <line x1="${margin.left - 5}" y1="${tickY}" x2="${margin.left}" y2="${tickY}" stroke="#666" />
+            <line x1="${margin.left}" y1="${tickY}" x2="${width - margin.right}" y2="${tickY}" stroke="#eee" stroke-dasharray="3,3" />
+            <text x="${margin.left - 10}" y="${tickY + 5}" text-anchor="end" class="axis-text">
+                ${Math.round(tickValue).toLocaleString()}
+            </text>
+        `;
+    }
+
+    let pathD = `M ${xScale(data[0].date)} ${yScale(data[0].xp)}`;
+    for (let i = 1; i < data.length; i++) {
+        pathD += ` L ${xScale(data[i].date)} ${yScale(data[i].xp)}`;
+    }
+
+    svg += `<path d="${pathD}" fill="none" stroke="var(--primary-color)" stroke-width="3" />`;
+
+    const points = data.map((d, i) => {
+        if (i === 0 || i === data.length - 1 || d.amount > xpMax * 0.01) {
+            const pathParts = d.path.split('/').filter(Boolean);
+            const projectName = pathParts[pathParts.length - 1] || "XP Gain";
+
+            return `<circle 
+                cx="${xScale(d.date)}" 
+                cy="${yScale(d.xp)}" 
+                r="5" 
+                fill="var(--secondary-color)"
+                onmouseover="showTooltip(event, '${projectName}', '${d.date.toLocaleDateString()}', ${d.amount}, ${d.xp})"
+                onmouseout="hideTooltip()"
+            />`;
+        }
+        return '';
+    }).join('');
+
+    svg += points;
+
+    xpTimeGraph.innerHTML = svg;
+}
+
+function showTooltip(event, projectName, date, amount, totalXp) {
+    const circle = event.target;
+    circle.setAttribute('r', '7');
+
+    tooltip.style.opacity = 1;
+    tooltip.style.left = `${event.pageX + 10}px`;
+    tooltip.style.top = `${event.pageY - 30}px`;
+    tooltip.innerHTML = `
+        <strong>${projectName}</strong><br>
+        Date: ${date}<br>
+        XP: ${(amount / 1000).toFixed(2).toLocaleString() + ' kB'}<br>
+        Total: ${(totalXp / 1000).toFixed(2).toLocaleString() + ' kB'}
+    `;
+}
+
+function hideTooltip() {
+    const circles = document.querySelectorAll('circle');
+    circles.forEach(circle => circle.setAttribute('r', '5'));
+    tooltip.style.opacity = 0;
 }
 
 async function loadSkillsChart() {
@@ -394,7 +414,6 @@ async function loadSkillsChart() {
     const displaySkills = await executeGraphQLQuery(skillsData);
     const transactions = displaySkills.user[0].transactions;
 
-    // Process data
     const skillAmounts = {};
     transactions.forEach(transaction => {
         const skillType = transaction.type.replace("skill_", "");
@@ -403,47 +422,35 @@ async function loadSkillsChart() {
         }
     });
 
-    // Get the container element
     const skillsChart = document.getElementById('skill-graph');
-    skillsChart.innerHTML = ''; // Clear previous content
+    skillsChart.innerHTML = '';
 
-    // SVG dimensions
     const width = 1400;
     const height = 700;
     const centerX = width / 2;
     const centerY = height / 2;
     const radius = Math.min(width, height) * 0.4;
 
-    // Create SVG element
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("width", width);
     svg.setAttribute("height", height);
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
 
-    // Create skill segments
     const skills = Object.keys(skillAmounts);
     const angleStep = (2 * Math.PI) / skills.length;
 
-    // Add this scaling function before the skills.forEach loop
     function scaleAmount(amount) {
-        return 100 * Math.pow(amount / 100, 0.4); // Adjust 0.7 for more/less scaling
+        return 100 * Math.pow(amount / 100, 0.4);
     }
 
     skills.forEach((skill, index) => {
         const angle = index * angleStep;
         const rawAmount = skillAmounts[skill] || 0;
 
-        // Apply scaling to make small amounts more visible
         const scaledAmount = scaleAmount(rawAmount);
-        const visualAmount = Math.min(100, scaledAmount); // Cap at 100%
-
-        // Calculate the filled radius with scaled amount
+        const visualAmount = Math.min(100, scaledAmount);
         const filledRadius = radius * (visualAmount / 100);
-
-        // Rest of your path creation code remains the same...
         const endAngle = angle + angleStep;
-
-        // Create the filled (black) portion
         const filledPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
         filledPath.setAttribute("d", `
                     M${centerX},${centerY}
@@ -453,8 +460,6 @@ async function loadSkillsChart() {
                 `);
         filledPath.setAttribute("fill", "#3498db");
         filledPath.setAttribute("stroke", "none");
-
-        // Create the empty (white) portion
         const emptyPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
         emptyPath.setAttribute("d", `
                     M${centerX + filledRadius * Math.cos(angle)},${centerY + filledRadius * Math.sin(angle)}
@@ -466,8 +471,6 @@ async function loadSkillsChart() {
         emptyPath.setAttribute("fill", "#ffffff");
         emptyPath.setAttribute("stroke", "#ccc");
         emptyPath.setAttribute("stroke-width", "1");
-
-        // Create invisible hover area (full segment)
         const hoverPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
         hoverPath.setAttribute("d", `
                     M${centerX},${centerY}
@@ -477,13 +480,11 @@ async function loadSkillsChart() {
                 `);
         hoverPath.setAttribute("fill", "transparent");
         hoverPath.setAttribute("data-skill", skill);
-        hoverPath.setAttribute("data-amount", rawAmount); // Show original amount in tooltip
-
-        // Hover effects
+        hoverPath.setAttribute("data-amount", rawAmount);
         hoverPath.addEventListener('mouseover', function () {
             filledPath.style.opacity = '0.8';
             emptyPath.style.opacity = '0.8';
-            showTooltip(skill, rawAmount); // Show original (unscaled) amount
+            showTooltip(skill, rawAmount);
         });
         hoverPath.addEventListener('mouseout', function () {
             filledPath.style.opacity = '1';
@@ -495,7 +496,6 @@ async function loadSkillsChart() {
         svg.appendChild(emptyPath);
         svg.appendChild(hoverPath);
 
-        // Labels (unchanged)
         const labelAngle = angle + angleStep / 2;
         const labelRadius = radius * 1.1;
         const labelX = centerX + labelRadius * Math.cos(labelAngle);
@@ -511,7 +511,6 @@ async function loadSkillsChart() {
         svg.appendChild(text);
     });
 
-    // Add center circle
     const centerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     centerCircle.setAttribute("cx", centerX);
     centerCircle.setAttribute("cy", centerY);
@@ -521,7 +520,6 @@ async function loadSkillsChart() {
     centerCircle.setAttribute("stroke-width", "1");
     svg.appendChild(centerCircle);
 
-    // Add title
     const title = document.createElementNS("http://www.w3.org/2000/svg", "text");
     title.setAttribute("x", centerX);
     title.setAttribute("y", centerY);
@@ -531,11 +529,7 @@ async function loadSkillsChart() {
     title.setAttribute("font-weight", "bold");
     title.textContent = "Skills";
     svg.appendChild(title);
-
     skillsChart.appendChild(svg);
-
-
-    // Tooltip functions
     function showTooltip(skill, amount) {
         let tooltip = document.getElementById('skill-tooltip');
         if (!tooltip) {
@@ -551,7 +545,6 @@ async function loadSkillsChart() {
         }
         tooltip.textContent = `${skill}: ${amount} %`;
         tooltip.style.display = 'block';
-
         document.addEventListener('mousemove', positionTooltip);
     }
 
@@ -570,229 +563,6 @@ async function loadSkillsChart() {
             document.removeEventListener('mousemove', positionTooltip);
         }
     }
-}
-
-
-
-// SVG Chart Creation
-function createXpTimeChart(transactions) {
-    console.log('Transactions data:', transactions);
-
-    // Clear previous chart
-    xpTimeGraph.innerHTML = '';
-
-    // Process transactions into chart data
-    const processedData = [];
-    let cumulativeXp = 0;
-
-    // Sort transactions by date (oldest first)
-    const sortedTransactions = [...transactions].sort((a, b) =>
-        new Date(a.createdAt) - new Date(b.createdAt)
-    );
-
-    // Create cumulative XP data points
-    sortedTransactions.forEach(tx => {
-        cumulativeXp += tx.amount;
-        processedData.push({
-            date: new Date(tx.createdAt),
-            xp: cumulativeXp,
-            amount: tx.amount,
-            path: tx.path
-        });
-    });
-
-    // If no data, show empty state
-    if (processedData.length === 0) {
-        xpTimeGraph.innerHTML = '<text x="50%" y="50%" text-anchor="middle">No XP data available</text>';
-        return;
-    }
-
-    // Chart dimensions
-    const width = xpTimeGraph.clientWidth;
-    const height = 400;
-    const margin = { top: 40, right: 40, bottom: 60, left: 80 };
-    const chartWidth = width - margin.left - margin.right;
-    const chartHeight = height - margin.top - margin.bottom;
-
-    // Find min/max values
-    const dateExtent = [processedData[0].date, processedData[processedData.length - 1].date];
-    const xpMax = processedData[processedData.length - 1].xp;
-
-    // Create scales
-    const xScale = (x) => {
-        return margin.left + (x - dateExtent[0]) / (dateExtent[1] - dateExtent[0]) * chartWidth;
-    };
-
-    const yScale = (y) => {
-        return height - margin.bottom - (y / xpMax) * chartHeight;
-    };
-
-    // Create SVG elements
-    const svgNS = 'http://www.w3.org/2000/svg';
-    const chartGroup = document.createElementNS(svgNS, 'g');
-
-    // Create axes
-    // X-axis line
-    const xAxis = document.createElementNS(svgNS, 'line');
-    xAxis.setAttribute('x1', margin.left);
-    xAxis.setAttribute('y1', height - margin.bottom);
-    xAxis.setAttribute('x2', width - margin.right);
-    xAxis.setAttribute('y2', height - margin.bottom);
-    xAxis.setAttribute('class', 'axis-line');
-    chartGroup.appendChild(xAxis);
-
-    // Y-axis line
-    const yAxis = document.createElementNS(svgNS, 'line');
-    yAxis.setAttribute('x1', margin.left);
-    yAxis.setAttribute('y1', margin.top);
-    yAxis.setAttribute('x2', margin.left);
-    yAxis.setAttribute('y2', height - margin.bottom);
-    yAxis.setAttribute('class', 'axis-line');
-    chartGroup.appendChild(yAxis);
-
-    // X-axis label
-    const xLabel = document.createElementNS(svgNS, 'text');
-    xLabel.setAttribute('x', margin.left + chartWidth / 2);
-    xLabel.setAttribute('y', height - 15);
-    xLabel.setAttribute('text-anchor', 'middle');
-    xLabel.textContent = 'Timeline';
-    chartGroup.appendChild(xLabel);
-
-    // Y-axis label
-    const yLabel = document.createElementNS(svgNS, 'text');
-    yLabel.setAttribute('transform', `translate(13, ${margin.top + chartHeight / 2}) rotate(-90)`);
-    yLabel.setAttribute('text-anchor', 'middle');
-    yLabel.textContent = 'Cumulative XP';
-    chartGroup.appendChild(yLabel);
-
-    // Title
-    const title = document.createElementNS(svgNS, 'text');
-    title.setAttribute('x', margin.left + chartWidth / 2);
-    title.setAttribute('y', margin.top - 10);
-    title.setAttribute('text-anchor', 'middle');
-    title.setAttribute('font-weight', 'bold');
-    title.textContent = 'XP Progress Over Time';
-    chartGroup.appendChild(title);
-
-    // X-axis ticks (months/years)
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const tickCount = Math.min(5, processedData.length);
-    const tickInterval = (dateExtent[1] - dateExtent[0]) / (tickCount - 1);
-
-    for (let i = 0; i < tickCount; i++) {
-        const tickDate = new Date(dateExtent[0].getTime() + tickInterval * i);
-        const tickX = xScale(tickDate);
-
-        // Tick line
-        const tickLine = document.createElementNS(svgNS, 'line');
-        tickLine.setAttribute('x1', tickX);
-        tickLine.setAttribute('y1', height - margin.bottom);
-        tickLine.setAttribute('x2', tickX);
-        tickLine.setAttribute('y2', height - margin.bottom + 5);
-        tickLine.setAttribute('stroke', '#666');
-        chartGroup.appendChild(tickLine);
-
-        // Tick label
-        const tickLabel = document.createElementNS(svgNS, 'text');
-        tickLabel.setAttribute('x', tickX);
-        tickLabel.setAttribute('y', height - margin.bottom + 20);
-        tickLabel.setAttribute('text-anchor', 'middle');
-        tickLabel.setAttribute('class', 'axis-text');
-        tickLabel.textContent = `${monthNames[tickDate.getMonth()]} ${tickDate.getFullYear()}`;
-        chartGroup.appendChild(tickLabel);
-    }
-
-    // Y-axis ticks
-    const yTickCount = 5;
-    for (let i = 0; i <= yTickCount; i++) {
-        const tickValue = (xpMax / yTickCount) * i;
-        const tickY = yScale(tickValue);
-
-        // Tick line
-        const tickLine = document.createElementNS(svgNS, 'line');
-        tickLine.setAttribute('x1', margin.left - 5);
-        tickLine.setAttribute('y1', tickY);
-        tickLine.setAttribute('x2', margin.left);
-        tickLine.setAttribute('y2', tickY);
-        tickLine.setAttribute('stroke', '#666');
-        chartGroup.appendChild(tickLine);
-
-        // Grid line
-        const gridLine = document.createElementNS(svgNS, 'line');
-        gridLine.setAttribute('x1', margin.left);
-        gridLine.setAttribute('y1', tickY);
-        gridLine.setAttribute('x2', width - margin.right);
-        gridLine.setAttribute('y2', tickY);
-        gridLine.setAttribute('stroke', '#eee');
-        gridLine.setAttribute('stroke-dasharray', '3,3');
-        chartGroup.appendChild(gridLine);
-
-        // Tick label
-        const tickLabel = document.createElementNS(svgNS, 'text');
-        tickLabel.setAttribute('x', margin.left - 10);
-        tickLabel.setAttribute('y', tickY + 5);
-        tickLabel.setAttribute('text-anchor', 'end');
-        tickLabel.setAttribute('class', 'axis-text');
-        tickLabel.textContent = Math.round(tickValue).toLocaleString();
-        chartGroup.appendChild(tickLabel);
-    }
-
-    // Create the path for XP line
-    let pathD = `M ${xScale(processedData[0].date)} ${yScale(processedData[0].xp)}`;
-    for (let i = 1; i < processedData.length; i++) {
-        pathD += ` L ${xScale(processedData[i].date)} ${yScale(processedData[i].xp)}`;
-    }
-
-    const path = document.createElementNS(svgNS, 'path');
-    path.setAttribute('d', pathD);
-    path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', 'var(--primary-color)');
-    path.setAttribute('stroke-width', 3);
-    chartGroup.appendChild(path);
-
-    console.log("processedData", processedData);
-
-    // Add data points for significant transactions
-    processedData.forEach((d, i) => {
-        // Only add points for significant XP gains or first/last points
-        if (i === 0 || i === processedData.length - 1 || d.amount > xpMax * 0.01) {
-            const circle = document.createElementNS(svgNS, 'circle');
-            circle.setAttribute('cx', xScale(d.date));
-            circle.setAttribute('cy', yScale(d.xp));
-            circle.setAttribute('r', 5);
-            circle.setAttribute('fill', 'var(--secondary-color)');
-
-            // Add hover effect and tooltip
-            circle.addEventListener('mouseover', (e) => {
-                circle.setAttribute('r', 7);
-
-                // Extract project name from path
-                const pathParts = d.path.split('/').filter(Boolean);
-                const projectName = pathParts[pathParts.length - 1] || "XP Gain";
-
-                // Show tooltip
-                tooltip.style.opacity = 1;
-                tooltip.style.left = `${e.pageX + 10}px`;
-                tooltip.style.top = `${e.pageY - 30}px`;
-                tooltip.innerHTML = `
-                            <strong>${projectName}</strong><br>
-                            Date: ${d.date.toLocaleDateString()}<br>
-                            XP: ${(d.amount / 1000).toFixed(2).toLocaleString() + ' kB'}<br>
-                            Total: ${(d.xp / 1000).toFixed(2).toLocaleString() + ' kB'}
-                        `;
-            });
-
-            circle.addEventListener('mouseout', () => {
-                circle.setAttribute('r', 5);
-                tooltip.style.opacity = 0;
-            });
-
-            chartGroup.appendChild(circle);
-        }
-    });
-
-    // Add the chart to the SVG
-    xpTimeGraph.appendChild(chartGroup);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
