@@ -156,19 +156,26 @@ header {
     flex-wrap: wrap;
 }
 
+#user-initial {
+    margin-right: 20px;
+    width: 60px;              
+    height: 60px;              
+    border-radius: 50%;       
+    background-color: var(--secondary-color); 
+    color: white;          
+    font-size: 24px;          
+    font-weight: bold;
+    display: flex;
+    align-items: center;     
+    justify-content: center; 
+    text-transform: uppercase;
+}
+
 .avatar img {
     width: 60px;
     height: 60px;
     border-radius: 50%;
     background-color: var(--secondary-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    color: white;
-    margin-right: 20px;
-    flex-shrink: 0;
-    cursor: pointer;
 }
 
 .user-profile {

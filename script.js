@@ -139,22 +139,23 @@ async function loadUserData() {
 
 async function loadUserPicture(data, username) {
     const profile = {};
-
     profile.user = data;
     const login = usersPicID.get(username)
-    const imgID = login ? `3P3A${login}.JPG` : `${username}.jpg`
+    const imgID = login ? `3P3A${login}.JPG` : `${username}.jpg`    
     const image = document.createElement('img');
-    image.alt = `${username}'s profile picture`;
     image.src = `https://discord.zone01oujda.ma/assets/pictures/${imgID}?format=webp&width=250&height=250`
+    
+    image.onerror = function() {
+        userInitial.textContent = `${username.charAt(0)}`; 
+    }
 
-    // Open image in a new tab when clicked
     image.addEventListener('click', () => {
         window.open(image.src, '_blank');
     });
 
-    userInitial.innerHTML = '';
-    userInitial.appendChild(image);
+    userInitial.appendChild(image);   
 }
+
 
 async function loadBasicUserInfo() {
     const query = `
@@ -170,7 +171,7 @@ async function loadBasicUserInfo() {
     `;
 
     const data = await executeGraphQLQuery(query);
-    const user = data.user[0];
+    const user = data.user[0];    
     await loadUserPicture(data, user.login);
 
     // Update UI with user info
