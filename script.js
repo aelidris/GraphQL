@@ -303,7 +303,7 @@ function createXpTimeChart(transactions) {
     `;
 
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const tickCount = Math.min(5, data.length);
+    const tickCount = Math.min(8, data.length);
     const dateRange = dateMax - dateMin;
 
     for (let i = 0; i < tickCount; i++) {
