@@ -1,0 +1,392 @@
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+    --bg-color: #f9f9f9;
+    --card-bg: #ffffff;
+    --text-color: #333333;
+    --border-radius: 8px;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --container-padding: 20px;
+    --card-padding: 20px;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--container-padding);
+    box-sizing: border-box;
+}
+
+.login-container {
+    max-width: 400px;
+    width: 90%;
+    margin: 100px auto;
+    padding: 30px;
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+.login-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+.login-container h1 {
+    margin: 0 0 25px 0;
+    text-align: center;
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    padding-bottom: 15px;
+}
+
+.login-container h1::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    border-radius: 2px;
+}
+
+@media (width < 480px) {
+    .login-container {
+        width: 85%;
+        padding: 20px;
+        margin: 30px auto;
+    }
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 1rem;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s;
+    width: 100%;
+}
+
+#login-form button {
+    display: block;
+    margin: 0px auto;
+}
+
+@media (width > 481px) {
+    button {
+        width: auto;
+    }
+}
+
+button:hover {
+    background-color: #2980b9;
+    color: white;
+}
+
+.error-message {
+    color: #e74c3c;
+    margin-top: 15px;
+    display: none;
+    font-size: 14px;
+    text-align: center;
+}
+
+header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 20px 0;
+    margin-bottom: 30px;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+#user-initial {
+    margin-right: 20px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: var(--secondary-color);
+    color: white;
+    font-size: 50px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+}
+
+.avatar img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: var(--secondary-color);
+    cursor: pointer;
+}
+
+.user-profile {
+    max-width: calc(100% - 80px);
+}
+
+.user-header {
+    font-size: 17px;
+    font-weight: 900;
+    margin: 0.2em 0;
+    word-break: break-word;
+    line-height: 1;
+}
+
+@media (width < 360px) {
+    .user-header {
+        font-size: 14px;
+    }
+}
+
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+@media (width < 768px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.card {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: var(--card-padding);
+    box-shadow: var(--shadow);
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+.card h2 {
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 10px;
+    margin-top: 0;
+    font-size: 1.5rem;
+}
+
+.stats-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    gap: 10px;
+}
+
+.stat-item {
+    flex: 1;
+    min-width: 100px;
+    text-align: center;
+    padding: 15px 5px;
+}
+
+@media (width < 576px) {
+    .stat-item {
+        min-width: 80px;
+        padding: 10px 5px;
+    }
+
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #777;
+}
+
+@media (width < 400px) {
+    .stat-value {
+        font-size: 24px;
+    }
+
+    .stat-label {
+        font-size: 12px;
+    }
+
+}
+
+.projects-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.project-item {
+    font-size: 18px;
+    padding: 15px 10px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+@media (width < 576px) {
+    .project-item {
+        font-size: 16px;
+        padding: 12px 8px;
+    }
+
+}
+
+.project-item:last-child {
+    border-bottom: none;
+}
+
+.tab-container {
+    margin-bottom: 20px;
+}
+
+.tab-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.tab-button {
+    background-color: #eee;
+    color: var(--text-color);
+    padding: 10px 15px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    width: auto;
+    white-space: nowrap;
+}
+
+@media (width < 576px) {
+    .tab-button {
+        flex: 1;
+        padding: 8px;
+        font-size: 14px;
+        text-align: center;
+    }
+
+}
+
+.tab-button.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.tab-content {
+    text-align: center;
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.logout-btn {
+    background-color: transparent;
+    border: 2px solid white;
+}
+
+.graph-container {
+    width: 100%;
+    margin-top: 20px;
+    overflow-x: auto;
+}
+
+svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.tooltip {
+    position: absolute;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 4px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 14px;
+    z-index: 1000;
+    max-width: 200px;
+    word-wrap: break-word;
+}
+
+.pass {
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+.axis-line {
+    stroke: #ccc;
+    stroke-width: 1;
+}
+
+.axis-text {
+    font-size: 12px;
+    fill: #666;
+}
+
+.hidden {
+    display: none;
+}

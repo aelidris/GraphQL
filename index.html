@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' fill='%23E10098'>G</text></svg>">
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+    <!-- Login Page -->
+    <div id="login-page" class="container">
+        <div class="login-container">
+            <h1>Login to Profile</h1>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Username or Email</label>
+                    <input type="text" id="username" placeholder="e.g., aelidris or user@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" required>
+                </div>
+                <button type="submit">Login</button>
+                <div id="error-message" class="error-message">Invalid credentials. Please try again.</div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Profile Page -->
+    <div id="profile-page" class="hidden">
+        <header>
+            <div class="container header-content">
+                <div class="user-info">
+                    <div class="avatar" id="user-initial"></div>
+                    <div class="user-profile">
+                        <p id="user-fullName" class="user-header"></p>
+                        <p id="user-name" class="user-header"></p>
+                        <p id="user-email" class="user-header"></p>
+                    </div>
+                </div>
+                <button class="logout-btn" id="logout-btn">Logout</button>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="profile-grid">
+                <!-- User Info Card -->
+                <div class="card">
+                    <h2>User Information</h2>
+                    <div>
+                        <div class="stats-container">
+                            <div class="stat-item">
+                                <div class="stat-value" id="total-xp"></div>
+                                <div class="stat-label">Total XP</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="transactions-count"></div>
+                                <div class="stat-label">Transactions</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="user-level"></div>
+                                <div class="stat-label">Level</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="pass-ratio"></div>
+                                <div class="stat-label">Audits ratio</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Projects Card -->
+                <div class="card">
+                    <h2>Recent Projects</h2>
+                    <ul class="projects-list" id="projects-list"></ul>
+                </div>
+            </div>
+
+            <!-- Statistics Card -->
+            <div class="card">
+                <h2>Statistics</h2>
+                <div class="tab-container">
+                    <div class="tab-buttons">
+                        <button class="tab-button active" data-tab="xp-graph">XP over Time</button>
+                        <button class="tab-button" data-tab="skill-graph">Skill progress</button>
+                    </div>
+
+                    <!--First chart (XP chart)-->
+                    <div class="tab-content active" id="xp-graph">
+                        <div class="graph-container" style="width: 100%; max-width: 800px; margin: 0 auto;">
+                            <svg id="xp-time-graph" viewBox="0 0 800 400"></svg>
+                        </div>
+                    </div>
+
+                    <!--Second chart (Skills chart)-->
+                    <div class="tab-content" id="skill-graph"></div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tooltip" class="tooltip"></div>
+
+    <script src="./script.js"></script>
+    <script src="./usersPicID.js"></script>
+
+</body>
+
+</html>
