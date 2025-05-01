@@ -51,7 +51,7 @@
                 <!-- User Info Card -->
                 <div class="card">
                     <h2>User Information</h2>
-                    <div id="user-info-content">
+                    <div>
                         <div class="stats-container">
                             <div class="stat-item">
                                 <div class="stat-value" id="total-xp"></div>
@@ -89,12 +89,14 @@
                         <button class="tab-button" data-tab="skill-graph">Skill progress</button>
                     </div>
 
+                    <!--First chart (XP chart)-->
                     <div class="tab-content active" id="xp-graph">
                         <div class="graph-container" style="width: 100%; max-width: 800px; margin: 0 auto;">
                             <svg id="xp-time-graph" viewBox="0 0 800 400"></svg>
                         </div>
                     </div>
 
+                    <!--Second chart (Skills chart)-->
                     <div class="tab-content" id="skill-graph"></div>
 
                 </div>

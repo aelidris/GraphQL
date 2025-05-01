@@ -482,27 +482,3 @@ svg {
 .hidden {
     display: none;
 }
-
-/* Print styles */
-@media print {
-    body {
-        background-color: white;
-    }
-
-    .card {
-        box-shadow: none;
-        border: 1px solid #ddd;
-    }
-
-    .logout-btn {
-        display: none;
-    }
-
-    .tab-buttons {
-        display: none;
-    }
-
-    .tab-content {
-        display: block !important;
-    }
-}

@@ -413,7 +413,6 @@ async function loadSkillsChart() {
         }
     });
 
-    const skillsChart = document.getElementById('skill-graph');
     skillsChart.innerHTML = '';
 
     const width = 1400;
