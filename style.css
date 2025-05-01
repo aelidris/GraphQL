@@ -372,6 +372,11 @@ svg {
     word-wrap: break-word;
 }
 
+.pass {
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
 .axis-line {
     stroke: #ccc;
     stroke-width: 1;
