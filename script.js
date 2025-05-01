@@ -262,11 +262,8 @@ function createXpTimeChart(transactions) {
         return;
     }
     let cumulativeXp = 0;
-    const sortedTransactions = [...transactions].sort((a, b) =>
-        new Date(a.createdAt) - new Date(b.createdAt)
-    );
 
-    const data = sortedTransactions.map(tx => {
+    const data = transactions.map(tx => {
         cumulativeXp += tx.amount;
         return {
             date: new Date(tx.createdAt),
@@ -275,8 +272,9 @@ function createXpTimeChart(transactions) {
             path: tx.path
         };
     });
+    console.log(data);
     
-    const width = xpTimeGraph.clientWidth || 800;
+    const width = 800;
     const height = 400;
     const margin = { top: 40, right: 40, bottom: 60, left: 80 };
     const chartWidth = width - margin.left - margin.right;
@@ -343,7 +341,7 @@ function createXpTimeChart(transactions) {
     svg += `<path d="${pathD}" fill="none" stroke="var(--primary-color)" stroke-width="3" />`;
 
     const points = data.map((d, i) => {
-        if (i === 0 || i === data.length - 1 || d.amount > xpMax * 0.01) {
+        if (i === 0 || i === data.length - 1 || d.amount >= 1000) {
             const pathParts = d.path.split('/').filter(Boolean);
             const projectName = pathParts[pathParts.length - 1] || "XP Gain";
 
