@@ -272,7 +272,6 @@ function createXpTimeChart(transactions) {
             path: tx.path
         };
     });
-    console.log(data);
     
     const width = 800;
     const height = 400;
