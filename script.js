@@ -502,7 +502,7 @@ async function loadSkillsChart() {
     centerCircle.setAttribute("cy", centerY);
     centerCircle.setAttribute("r", radius * 0.2);
     centerCircle.setAttribute("fill", "#fff");
-    centerCircle.setAttribute("stroke", "#333");
+    centerCircle.setAttribute("stroke", "none");
     centerCircle.setAttribute("stroke-width", "1");
     svg.appendChild(centerCircle);
 
