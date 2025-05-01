@@ -1,5 +1,3 @@
-/* Build upon existing styles with enhanced responsiveness */
-
 :root {
     --primary-color: #3498db;
     --secondary-color: #2ecc71;
@@ -12,7 +10,6 @@
     --card-padding: 20px;
 }
 
-/* Base styles */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
@@ -31,7 +28,6 @@ body {
     box-sizing: border-box;
 }
 
-/* Login Page Responsive Styles */
 .login-container {
     max-width: 400px;
     width: 90%;
@@ -134,7 +130,6 @@ button:hover {
     text-align: center;
 }
 
-/* Profile Page Header */
 header {
     background-color: var(--primary-color);
     color: white;
@@ -198,7 +193,6 @@ header {
 }
 
 
-/* Profile Grid Layout */
 .profile-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -227,7 +221,6 @@ header {
     font-size: 1.5rem;
 }
 
-/* Stats Container */
 .stats-container {
     display: flex;
     flex-wrap: wrap;
@@ -272,7 +265,6 @@ header {
 
 }
 
-/* Projects List */
 .projects-list {
     list-style-type: none;
     padding: 0;
@@ -302,17 +294,6 @@ header {
     border-bottom: none;
 }
 
-.pass {
-    color: var(--primary-color);
-    font-weight: bold;
-}
-
-.fail {
-    color: #e74c3c;
-    font-weight: bold;
-}
-
-/* Tab Container */
 .tab-container {
     margin-bottom: 20px;
 }
@@ -364,7 +345,6 @@ header {
     border: 2px solid white;
 }
 
-/* SVG Graph Responsiveness */
 .graph-container {
     width: 100%;
     margin-top: 20px;
@@ -377,7 +357,6 @@ svg {
     display: block;
 }
 
-/* Tooltips */
 .tooltip {
     position: absolute;
     padding: 8px 12px;
@@ -393,16 +372,6 @@ svg {
     word-wrap: break-word;
 }
 
-/* Graph Elements */
-.bar {
-    fill: var(--primary-color);
-    transition: height 0.3s ease;
-}
-
-.bar:hover {
-    fill: #2980b9;
-}
-
 .axis-line {
     stroke: #ccc;
     stroke-width: 1;
@@ -411,72 +380,6 @@ svg {
 .axis-text {
     font-size: 12px;
     fill: #666;
-}
-
-/* Pie chart styles */
-.pie-segment {
-    transition: transform 0.2s;
-}
-
-.pie-segment:hover {
-    transform: translateX(5px);
-}
-
-@media (width < 576px) {
-    .pie-segment:hover {
-        transform: translateX(3px);
-    }
-}
-
-/* Legend */
-.legend {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    margin-right: 15px;
-    margin-bottom: 8px;
-}
-
-@media (width < 576px) {
-    .legend-item {
-        margin-right: 10px;
-        margin-bottom: 6px;
-    }
-
-}
-
-.legend-color {
-    width: 15px;
-    height: 15px;
-    margin-right: 5px;
-    border-radius: 3px;
-    flex-shrink: 0;
-}
-
-@media (width < 576px) {
-    .spinner {
-        width: 30px;
-        height: 30px;
-        border-width: 3px;
-    }
-
-}
-
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
 }
 
 .hidden {
