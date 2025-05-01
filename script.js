@@ -318,7 +318,7 @@ function createXpTimeChart(transactions) {
         `;
     }
 
-    const yTickCount = 5;
+    const yTickCount = 8;
     for (let i = 0; i <= yTickCount; i++) {
         const tickValue = (xpMax / yTickCount) * i;
         const tickY = yScale(tickValue);
