@@ -349,8 +349,9 @@ function createXpTimeChart(transactions) {
                 cy="${yScale(d.xp)}" 
                 r="5" 
                 fill="var(--secondary-color)"
-                onmouseover="showTooltip(event, '${projectName}', '${d.date.toLocaleDateString()}', ${d.amount}, ${d.xp})"
-                onmouseout="hideTooltip()"
+                data-tooltip="${projectName}|${d.date.toLocaleDateString()}|${d.amount}|${d.xp}"
+                onmouseover="showXpTooltip(this)"
+                onmouseout="hideXpTooltip()"
             />`;
         }
         return '';
@@ -361,25 +362,55 @@ function createXpTimeChart(transactions) {
     xpTimeGraph.innerHTML = svg;
 }
 
-function showTooltip(event, projectName, date, amount, totalXp) {
-    const circle = event.target;
-    circle.setAttribute('r', '7');
+let currentTooltipElement = null;
 
-    tooltip.style.opacity = 1;
-    tooltip.style.left = `${event.pageX + 10}px`;
-    tooltip.style.top = `${event.pageY - 30}px`;
+function showXpTooltip(element) {
+    const [projectName, date, amount, xp] = element.getAttribute('data-tooltip').split('|');
+    let tooltip = document.getElementById('xp-tooltip');
+    
+    if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = 'xp-tooltip';
+        tooltip.style.position = 'absolute';
+        tooltip.style.background = 'rgba(0,0,0,0.8)';
+        tooltip.style.color = 'white';
+        tooltip.style.padding = '5px 10px';
+        tooltip.style.borderRadius = '5px';
+        tooltip.style.pointerEvents = 'none';
+        tooltip.style.zIndex = '1000';
+        document.body.appendChild(tooltip);
+    }
+    
     tooltip.innerHTML = `
-        <strong>${projectName}</strong><br>
-        Date: ${date}<br>
-        XP: ${(amount / 1000).toFixed(2).toLocaleString() + ' kB'}<br>
-        Total: ${(totalXp / 1000).toFixed(2).toLocaleString() + ' kB'}
+        <div><strong>${projectName}</strong></div>
+        <div>Date: ${date}</div>
+        <div>XP: ${(amount/1000).toFixed(2)} kB</div>
+        <div>Total: ${(xp/1000).toFixed(2)} kB</div>
     `;
+    tooltip.style.display = 'block';
+    currentTooltipElement = element; 
+    positionXpTooltip(); 
+    document.addEventListener('mousemove', positionXpTooltip);
 }
 
-function hideTooltip() {
-    const circles = document.querySelectorAll('circle');
-    circles.forEach(circle => circle.setAttribute('r', '5'));
-    tooltip.style.opacity = 0;
+function positionXpTooltip() {
+    if (!currentTooltipElement) return;
+    
+    const tooltip = document.getElementById('xp-tooltip');
+    if (!tooltip) return;
+    
+    const rect = currentTooltipElement.getBoundingClientRect();
+    tooltip.style.left = `${rect.left + window.scrollX + 10}px`;
+    tooltip.style.top = `${rect.top + window.scrollY - 40}px`;
+}
+
+function hideXpTooltip() {
+    const tooltip = document.getElementById('xp-tooltip');
+    if (tooltip) {
+        tooltip.style.display = 'none';
+    }
+    currentTooltipElement = null;
+    document.removeEventListener('mousemove', positionXpTooltip);
 }
 
 async function loadSkillsChart() {
