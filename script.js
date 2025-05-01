@@ -216,21 +216,21 @@ async function loadXpAndProjects() {
 
     const lvlQuery = `
             {
-                  user {
-                    transactions(
-                      where: {
-                        type: { _eq: "level" }
-                        _and: [
-                          { path: { _niregex: "piscine-go" } }
-                          { path: { _niregex: "piscine-js" } }
-                        ]
-                      }
-                      
-                    ) {
-                      amount
-                      createdAt
+                user {
+                  transactions(
+                    where: {
+                      type: { _eq: "level" }
+                      _and: [
+                        { path: { _niregex: "piscine-go" } }
+                        { path: { _niregex: "piscine-js" } }
+                      ]
                     }
+                    
+                  ) {
+                    amount
+                    createdAt
                   }
+                }
             }`;
 
     const levelData = await executeGraphQLQuery(lvlQuery);
