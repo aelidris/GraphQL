@@ -16,9 +16,6 @@ const auditRatio = document.getElementById('pass-ratio');
 const userLevel = document.getElementById('user-level')
 const recentPassedProjects = document.getElementById('projects-list');
 
-// Loading elements
-const xpGraphLoading = document.getElementById('xp-graph-loading');
-
 // Graph elements
 const xpTimeGraph = document.getElementById('xp-time-graph');
 const skillsChart = document.getElementById('skill-graph');
