@@ -237,7 +237,7 @@ async function loadXpAndProjects() {
     const tr = levelData.user[0].transactions;
     const lastLevel = tr[tr.length - 1].amount;
     userLevel.textContent = `${lastLevel}`;
-    
+
     if (projects.length > 0) {
         recentPassedProjects.innerHTML = '';
         projects.forEach(project => {
@@ -272,7 +272,7 @@ function createXpTimeChart(transactions) {
             path: tx.path
         };
     });
-    
+
     const width = 800;
     const height = 400;
     const margin = { top: 40, right: 40, bottom: 60, left: 80 };
@@ -282,7 +282,7 @@ function createXpTimeChart(transactions) {
     const dateMin = data[0].date;
     const dateMax = data[data.length - 1].date;
     const xpMax = data[data.length - 1].xp;
-    
+
     const xScale = (date) => {
         return margin.left + ((date - dateMin) / (dateMax - dateMin)) * chartWidth;
     };
@@ -489,7 +489,7 @@ async function loadSkillsChart() {
         const labelY = centerY + labelRadius * Math.sin(labelAngle);
 
         const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        text.setAttribute("x", labelX-10);
+        text.setAttribute("x", labelX - 10);
         text.setAttribute("y", labelY);
         text.setAttribute("font-size", "15");
         text.setAttribute("font-weight", "bold")
