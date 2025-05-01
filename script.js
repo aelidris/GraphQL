@@ -489,11 +489,10 @@ async function loadSkillsChart() {
         const labelY = centerY + labelRadius * Math.sin(labelAngle);
 
         const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        text.setAttribute("x", labelX);
+        text.setAttribute("x", labelX-10);
         text.setAttribute("y", labelY);
-        text.setAttribute("text-anchor", "middle");
-        text.setAttribute("dominant-baseline", "middle");
-        text.setAttribute("font-size", "13");
+        text.setAttribute("font-size", "15");
+        text.setAttribute("font-weight", "bold")
         text.textContent = skill;
         svg.appendChild(text);
     });
@@ -512,7 +511,7 @@ async function loadSkillsChart() {
     title.setAttribute("y", centerY);
     title.setAttribute("text-anchor", "middle");
     title.setAttribute("dominant-baseline", "middle");
-    title.setAttribute("font-size", "14");
+    title.setAttribute("font-size", "20");
     title.setAttribute("font-weight", "bold");
     title.textContent = "Skills";
     svg.appendChild(title);
