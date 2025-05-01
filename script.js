@@ -17,7 +17,6 @@ const userLevel = document.getElementById('user-level')
 const recentPassedProjects = document.getElementById('projects-list');
 
 // Loading elements
-const projectsLoading = document.getElementById('projects-loading');
 const xpGraphLoading = document.getElementById('xp-graph-loading');
 
 // Graph elements
@@ -139,7 +138,6 @@ async function loadBasicUserInfo() {
     const userInfo = `
         {
             user {
-                id
                 login
                 firstName
                 lastName
@@ -180,8 +178,7 @@ async function loadXpAndProjects() {
     const totalXPrecentProjects = `
                {
                   user {
-                  auditRatio
-                    id
+                    auditRatio
                     transactions(
                       where: {
                         type: { _eq: "xp" }
@@ -202,6 +199,7 @@ async function loadXpAndProjects() {
     const data = await executeGraphQLQuery(totalXPrecentProjects);
     const user = data.user[0];
     const transactions = user.transactions
+
     createXpTimeChart(transactions);
 
     // Calculate total XP
@@ -242,10 +240,7 @@ async function loadXpAndProjects() {
     const tr = levelData.user[0].transactions;
     const lastLevel = tr[tr.length - 1].amount;
     userLevel.textContent = `${lastLevel}`;
-
-    // Display recent projects
-    projectsLoading.classList.add('hidden');
-
+    
     if (projects.length > 0) {
         recentPassedProjects.innerHTML = '';
         projects.forEach(project => {
@@ -265,7 +260,6 @@ async function loadXpAndProjects() {
 
 function createXpTimeChart(transactions) {
     xpTimeGraph.innerHTML = '';
-    // If no data, show empty state
     if (!transactions || transactions.length === 0) {
         xpTimeGraph.innerHTML = '<text x="50%" y="50%" text-anchor="middle">No XP data available</text>';
         return;
@@ -284,7 +278,7 @@ function createXpTimeChart(transactions) {
             path: tx.path
         };
     });
-
+    
     const width = xpTimeGraph.clientWidth || 800;
     const height = 400;
     const margin = { top: 40, right: 40, bottom: 60, left: 80 };
@@ -294,7 +288,7 @@ function createXpTimeChart(transactions) {
     const dateMin = data[0].date;
     const dateMax = data[data.length - 1].date;
     const xpMax = data[data.length - 1].xp;
-
+    
     const xScale = (date) => {
         return margin.left + ((date - dateMin) / (dateMax - dateMin)) * chartWidth;
     };
