@@ -184,6 +184,9 @@ async function loadXpAndProjects() {
                           { path: { _niregex: "piscine-js/" } }
                         ]
                       }
+                        
+                      order_by: { createdAt: asc }
+
                     ) {
                       amount
                       path
@@ -196,7 +199,7 @@ async function loadXpAndProjects() {
     const data = await executeGraphQLQuery(totalXPrecentProjects);
     const user = data.user[0];
     const transactions = user.transactions
-
+    
     createXpTimeChart(transactions);
 
     // Calculate total XP
